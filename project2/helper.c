@@ -19,3 +19,23 @@ void err_msg(int err)
 }
 
 // get input from terminal
+int get_input(int argc, char *argv[])
+{
+  char in[3000];
+  if ((argc < 1) || (argc > 1))
+  {
+    err_msg(0);
+  }
+  else
+  {
+    
+  }
+}
+
+
+// print function
+void print(char[] str)
+{
+  printf(str);
+  return;
+}
