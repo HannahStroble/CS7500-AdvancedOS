@@ -14,28 +14,43 @@ void err_msg(int err)
   {
     printf("Please enter a file name.\n\nUsage: ./pwordcount <filename>\n\n");
   }
+  if (err == 1)
+  {
+    printf("\nUnable to open file.\n");
+    printf("Please check if file exists and you have read privilege.");
+  }
 
   return;
 }
 
-// get input from terminal
-int get_input(int argc, char *argv[])
-{
-  char in[3000];
-  if ((argc < 1) || (argc > 1))
+
+// count all words in a file
+int count_words(FILE *input)
   {
-    err_msg(0);
-  }
-  else
-  {
+    char words = 0;
+    char new_char;
     
+    // loop through file till end
+    while ((new_char = fgetc(input)) != EOF)
+    {
+      printf("%c", new_char);
+      // check for spaces, if so then word
+      if (new_char == ' ' ||
+          new_char == '\t' ||
+          new_char == '\n' ||
+          new_char == '\0')
+      {
+        words++;
+      }
+    }
+
+    // return total number of words in file
+    return words;
   }
-}
 
 
-// print function
-void print(char[] str)
-{
-  printf(str);
-  return;
-}
+
+
+
+
+
