@@ -33,7 +33,6 @@ int count_words(FILE *input)
     // loop through file till end
     while ((new_char = fgetc(input)) != EOF)
     {
-      printf("%c", new_char);
       // check for spaces, if so then word
       if (new_char == ' ' ||
           new_char == '\t' ||
@@ -49,7 +48,19 @@ int count_words(FILE *input)
   }
 
 
+// convert file into char array
+char * file_to_char(FILE * file, int size)
+  {
+    char result[size] = "";
+    char c;
 
+    while((c=fgetc(file)) != EOF )
+    {
+      strcat(result, c);
+    }
+    return result;
+
+  }
 
 
 
