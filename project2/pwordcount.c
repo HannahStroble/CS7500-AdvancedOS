@@ -15,7 +15,7 @@
 #include "helper.h"
 
 // local definitions
-#define BUFFER_SIZE 1000
+#define BUFFER_SIZE 10000
 #define READ_END 0
 #define WRITE_END 1
 
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
       close(fd2[WRITE_END]);
 
       // open file
-      printf("\nProcess 1 is reading file %s now ... \n", argv[1]);
+      printf("\nProcess 1 is reading file \"%s\" now ... \n", argv[1]);
       file = fopen(argv[1], "r");
 
       // check if file opened successfully
