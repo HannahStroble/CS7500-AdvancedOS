@@ -25,19 +25,20 @@ void err_msg(int err)
 
 
 // count all words in a file
-int count_words(FILE *input)
+int count_words(char* arr)
   {
     char words = 0;
-    char new_char;
+    int i;
     
     // loop through file till end
-    while ((new_char = fgetc(input)) != EOF)
+    for (i=0; i<strlen(arr); i++)
     {
+      
       // check for spaces, if so then word
-      if (new_char == ' ' ||
-          new_char == '\t' ||
-          new_char == '\n' ||
-          new_char == '\0')
+      if (arr[i] == ' ' ||
+          arr[i] == '\t' ||
+          arr[i] == '\n' ||
+          arr[i] == '\0')
       {
         words++;
       }
@@ -46,22 +47,5 @@ int count_words(FILE *input)
     // return total number of words in file
     return words;
   }
-
-
-// convert file into char array
-char * file_to_char(FILE * file, int size)
-  {
-    char result[size] = "";
-    char c;
-
-    while((c=fgetc(file)) != EOF )
-    {
-      strcat(result, c);
-    }
-    return result;
-
-  }
-
-
 
 
