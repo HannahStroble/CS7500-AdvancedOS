@@ -1,3 +1,12 @@
-// list helper functions referenced
+////////////////////////////////////////////////////
+// COMP7500 - Project 2 - Pipe-based WordcountTool
+// Name: Hannah Reinbolt
+// Date: 2/9/2021
+////////////////////////////////////////////////////
+
+////////////////////////////////// 
+// use: header file for helper.c
+// description: functions from header.c are listed here for use in other files.
+//////////////////////////////////
 void err_msg(int err);
 int count_words(char* arr);

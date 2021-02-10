@@ -1,36 +1,65 @@
+//////////////////////////////////////////////////////////////
+// COMP7500 - Project 2 - Pipe-based Wordcount Tool
+// Name: Hannah Reinbolt
+// Date: 2/9/2021
+// Description: Helper functions for main pwordcount.c file.
+//////////////////////////////////////////////////////////////
+
+// libraries
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
 
+// local libraries
 #include "helper.h"
 
-
-// error messages
+////////////////////////////////////////////////
+// name: err_msg
+// use: error message printer
+// description: quickly print different error messages for certain outcomes.
+//
+// input: int err
+// input description: integer number representing specific error message
+// output: void
+// output description: no output expected
+////////////////////////////////////////////////
 void err_msg(int err)
 {
-  // Incorrect function usage - too few or too many arguments
+  // incorrect function usage - too few or too many arguments
   if (err == 0)
   {
-    printf("Please enter a file name.\n\nUsage: ./pwordcount <filename>\n\n");
+    printf("\nPlease enter a file name.\n\nUsage: ./pwordcount <filename>\n");
   }
+
+  // improper use of pwordcount function, expect one argument only
   if (err == 1)
   {
     printf("\nUnable to open file.\n");
     printf("Please check if file exists and you have read privilege.");
   }
 
+  // return nothing
   return;
 }
 
-
-// count all words in a file
+//////////////////////////////////////////////////
+// name: count_words
+// use: count all words in a given char array
+// description: count all words in a given char array
+//
+// input: char* arr
+// input description: char array containing some chars
+// output: int
+// output description: integer representing number of words in char array
+//////////////////////////////////////////////////
 int count_words(char* arr)
   {
+    // local variables
     char words = 0;
     int i;
     
-    // loop through file till end
+    // loop through char array till end
     for (i=0; i<strlen(arr); i++)
     {
       

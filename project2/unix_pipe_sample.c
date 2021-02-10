@@ -17,6 +17,14 @@
 #define READ_END	0
 #define WRITE_END	1
 
+///////////////////////////////////////
+// name: main
+// use: basic unix pipe demo
+// description: demonstrate how to use a simple unix pipe
+// input: void
+// output: int
+// output description: integer that ends program
+////////////////////////////////////////
 int main(void)
 {
 	char write_msg[BUFFER_SIZE] = "Greetings";
