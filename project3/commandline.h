@@ -1,2 +1,2 @@
 // helperfile
-void help();
+int help();

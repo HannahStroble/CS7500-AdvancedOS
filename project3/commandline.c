@@ -15,15 +15,15 @@
 #include <pthread.h>
 
 // help menu
-void help()
+int help()
 {
-  printf("run <job> <time> <pri>: submit a job named <job>,\n\t\t\texecution time is <time>,\n\t\t\tpriority is <pri>.\n")
-  printf("list: display the job status.")
-  printf("fcfs: change the scheduling policy to FCFS.")
-  printf("sjf: change the scheduling policy to SJF.")
-  printf("priority: change the scheduling policy to priority.")
-  printf("test <benchmark> <policy> <num_of_jobs> <priority_levels>\n\t<min_CPU_time> <max_CPU_time>")
-  printf("quit: exit AUbatch")
+  printf("run <job> <time> <pri>: submit a job named <job>,\n\t\t\texecution time is <time>,\n\t\t\tpriority is <pri>.\n");
+  printf("list: display the job status.");
+  printf("fcfs: change the scheduling policy to FCFS.");
+  printf("sjf: change the scheduling policy to SJF.");
+  printf("priority: change the scheduling policy to priority.");
+  printf("test <benchmark> <policy> <num_of_jobs> <priority_levels>\n\t<min_CPU_time> <max_CPU_time>");
+  printf("quit: exit AUbatch");
 
-  return;
+  return 0;
 }
