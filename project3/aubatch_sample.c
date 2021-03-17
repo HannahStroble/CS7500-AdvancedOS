@@ -30,6 +30,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 typedef unsigned int u_int; 
 

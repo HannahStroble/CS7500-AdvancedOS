@@ -29,16 +29,22 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  // start forever loop
-  while(1)
+  char *buffer;
+  size_t bufsize = 64;
+        
+  buffer = (char*) malloc(bufsize * sizeof(char));
+  if (buffer == NULL) 
   {
-    // get user input 
-    fgets(usr_input, sizeof(usr_input), stdin);
-    printf("usr input: %s", usr_input);
-
-    // check for help menu
-    exit(1);
-  }
+ 		perror("Unable to malloc buffer");
+ 		exit(1);
+	}
+  
+  // start forever loop
+  while (1) {
+		printf("> [? for menu]: ");
+		getline(&buffer, &bufsize, stdin);
+		cmd_dispatch(buffer);
+	}
 
 
   // return
