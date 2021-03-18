@@ -49,43 +49,43 @@ int cmd_quit(int nargs, char **args) {
 /*
  * Display menu information
  */
-void showmenu(const char *name, const char *x[])
+void showmenu(const char *x[])
 {
-	int ct, half, i;
+	// counter
+	int i;
 
+    // print out newline
 	printf("\n");
-	printf("%s\n", name);
 	
-	for (i=ct=0; x[i]; i++) {
-		ct++;
+    // print out all menu items
+	for (i=0; x[i]; i++) {
+		printf("%s", x[i]);
 	}
-	half = (ct+1)/2;
-
-	for (i=0; i<half; i++) {
-		printf("    %-36s", x[i]);
-		if (i+half < ct) {
-			printf("%s", x[i+half]);
-		}
-		printf("\n");
-	}
-
+    // final newline
 	printf("\n");
 }
 
+// help menu struct or text
 static const char *helpmenu[] = {
-	"[run] <job> <time> <priority>       ",
-	"[quit] Exit AUbatch                 ",
-	"[help] Print help menu              ",
-        /* Please add more menu options below */
+	"run <job> <time> <pri>: submit a job named <job>,\n\t\t\texecution time is <time>,\n\t\t\tpriority is <pri>.\n",
+	"list: display the job status.\n",
+	"fcfs: change the scheduling policy to FCFS.\n",
+	"sjf: change the scheduling policy to SJF.\n",
+	"priority: change the scheduling policy to priority.\n",
+	"test <benchmark> <policy> <num_of_jobs> <priority_levels>\n     <min_CPU_time> <max_CPU_time>\n",
+	"quit: exit AUbatch\n",
 	NULL
 };
 
+// call and printout help menu
 int cmd_helpmenu(int n, char **a)
 {
+	// default number of args and char array of entry to print
 	(void)n;
 	(void)a;
 
-	showmenu("AUbatch help menu", helpmenu);
+    // print helpmenu
+	showmenu(helpmenu);
 	return 0;
 }
 
@@ -150,4 +150,25 @@ int cmd_dispatch(char *cmd)
 	return EINVAL;
 }
 
+/*
+ * Command line main loop.
+ */
+void *commandline( void *ptr )
+{
+	    char *buffer;
+        size_t bufsize = 64;
+        
+        buffer = (char*) malloc(bufsize * sizeof(char));
+        if (buffer == NULL) {
+ 		perror("Unable to malloc buffer");
+ 		exit(1);
+	}
+
+    while (1) {
+		printf("\n>");
+		getline(&buffer, &bufsize, stdin);
+		cmd_dispatch(buffer);
+	}
+        return 0;
+}
 
