@@ -1,9 +1,20 @@
 // helperfile
-void menu_execute(char *line, int isargs); 
-int cmd_run(int nargs, char **args); 
+
+// commandline
 int cmd_quit(int nargs, char **args); 
-void showmenu(const char *x[]);
-int cmd_helpmenu(int n, char **a);
 int cmd_dispatch(char *cmd);
 void *commandline( void *ptr );
-int process_list();
+
+// processing
+int cmd_run(int nargs, char **args);
+int process_list(int nargs, char **args);
+
+// menu
+void menu_execute(char *line, int isargs); 
+void showmenu(const char *x[]);
+int cmd_helpmenu(int n, char **a);
+
+// scheduling
+int run_fcfs(int nargs, char **args);
+int run_sjf(int nargs, char **args);
+int run_pri(int nargs, char **args);

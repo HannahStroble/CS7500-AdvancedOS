@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
     buff_next = 0;  
     buff_prev = 0;
     err_flag = 0; 
+    b_job = 0;
 
     /* Create two independent threads:command and executors */
     iret1 = pthread_create(&command_thread, NULL, commandline, (void*) message1);

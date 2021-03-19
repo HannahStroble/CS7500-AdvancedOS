@@ -22,6 +22,7 @@ int buff_prev;          // next process to run
 int p_waiting;          // number of processes waiting to run
 int finished_next;      // next free spot in the finished processes list
 bool err_flag;  // if error messages will be printed
+int b_job;
 
 // global locks
 pthread_mutex_t cmd_queue_lock;  // Lock for critical sections 
@@ -63,7 +64,6 @@ new_process current_process;
 
 // dispatcher functions
 void execute_process(new_process p);
-void update_finished_process(new_process t);
 void *dispatch(void *point);
 
 // scheduler functions
@@ -72,10 +72,13 @@ new_process init_process(char **argv);
 void sort_process_list(new_process *proc_list);
 
 // policy functions
+void sort_process_list(new_process *proc_list);
+int switch_to_policy(const void *a, const void *b);
 
 // reporting stats functions
 
 // extra programs
 void err_msg(char *item, bool err_flag);
+
 
 // F

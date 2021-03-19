@@ -27,6 +27,18 @@
 #define MAXMENUARGS  4 
 #define MAXCMDLINE   64 
 
+// help menu struct or text
+static const char *helpmenu[] = {
+	"run <job> <time> <pri>: submit a job named <job>,\n\t\t\texecution time is <time>,\n\t\t\tpriority is <pri>.\n",
+	"list: display the job status.\n",
+	"fcfs: change the scheduling policy to FCFS.\n",
+	"sjf: change the scheduling policy to SJF.\n",
+	"priority: change the scheduling policy to priority.\n",
+	"test <benchmark> <policy> <num_of_jobs> <priority_levels>\n     <min_CPU_time> <max_CPU_time>\n",
+	"quit: exit AUbatch\n",
+	NULL
+};
+
 /*
  * The run command - submit a job.
  */
@@ -35,14 +47,29 @@ int cmd_run(int nargs, char **args) {
 		printf("Usage: run <job> <time> <priority>\n");
 		return EINVAL;
 	}   
-        /* Use execv to run the submitted job in AUbatch */
-		err_msg("At: cmd_run before scheduler", err_flag);
-		scheduler(nargs, args);
-		err_msg("Finished: cmd_run after scheduler", err_flag);
 
-		return 0; /* if succeed */
+	// make sure the file exists
+	FILE *file1 = fopen(args[1], "r");
+	if (file1 == NULL)
+	{
+		printf("File does not exist. Please enter valid file path and name.\n");
+		fclose(file1);
+		return EINVAL;
+	}
+
+	// close file, we were just checking
+	fclose(file1);
+
+    /* Use execv to run the submitted job in AUbatch */
+	err_msg("At: cmd_run before scheduler", err_flag);
+	scheduler(nargs, args);
+	err_msg("Finished: cmd_run after scheduler", err_flag);
+
+	return 0; /* if succeed */
 }
-
+////////////////////////////////////////////
+////////////////////////////////////////////
+//////////REPORTING
 /*
  * The quit command.
  */
@@ -52,51 +79,51 @@ int cmd_quit(int nargs, char **args) {
 }
 
 // list processes
-int process_list()
+int process_list(int nargs, char **args)
 {
+	err_msg("At: list beginning", err_flag);
 	// check if there are any running processes
-	if ((finished_next != 0) || (p_waiting != 0))
+	if ((finished_next > 0) || (p_waiting > 0))
 	{
 		// counter
 		int i;
+		struct tm time1, time2;
 
 		// print format
-		printf("Name	CPU_Time	Pri	Arrival_time	Progress");
+		printf("Name\tCPU_Time\tPri\tArrival_time\tProgress\n");
 
 		// iterate through finished processes
 		for (i=0; i < finished_next; i++)
 		{
 			// define current finished process
-			new_process p_finish = finished_processes[i];
-			char *stat = "finished";
-			char *time = p_finish->arrival_time;
-			printf("%s %d %d %s %s\n",
-					p_finish->program,
-					p_finish->cpu_time,
-					p_finish->priority,
-					time, stat);
+
+			time1 = *localtime(&finished_processes[i]->arrival_time);
+			printf("%s\t%d\t%d\t%02d:%02d:%02d\tFinished\t\n", 
+			finished_processes[i]->program, 
+			finished_processes[i]->cpu_time, 
+			finished_processes[i]->priority, 
+			time1.tm_hour,
+			time1.tm_min,
+			time1.tm_sec);
 		}
 
 		// iterate through waiting processes
 		for (i=0; i < buff_next; i++)
 		{
 			// define current waiting processes
-			new_process p_wait = running_processes[i];
-			char *stat = "---waiting---";
+			char *stat = "running";
 
-			// check if there is remaining burst time
-			if ((p_wait->cpu_first_time > 0)&&(p_wait->cpu_time_remaining > 0))
-			{
-				stat = "running";
-			}
-
-			// print out format
-			char *time = p_wait->arrival_time;
-			printf("%s %d %d %s %s\n", 
-					p_wait->program,
-					p_wait->cpu_time,
-					p_wait->priority,
-					time, stat);
+			// print out format 
+			time2 = *localtime(&running_processes[i]->arrival_time);
+			
+			printf("%s\t%d\t%d\t%02d:%02d:%02d\t%s\t\n", 
+			running_processes[i]->program, 
+			running_processes[i]->cpu_time, 
+			running_processes[i]->priority, 
+			time2.tm_hour,
+			time2.tm_min,
+			time2.tm_sec,
+			stat);
 		}
 	}
 	else
@@ -127,18 +154,6 @@ void showmenu(const char *x[])
 	printf("\n");
 }
 
-// help menu struct or text
-static const char *helpmenu[] = {
-	"run <job> <time> <pri>: submit a job named <job>,\n\t\t\texecution time is <time>,\n\t\t\tpriority is <pri>.\n",
-	"list: display the job status.\n",
-	"fcfs: change the scheduling policy to FCFS.\n",
-	"sjf: change the scheduling policy to SJF.\n",
-	"priority: change the scheduling policy to priority.\n",
-	"test <benchmark> <policy> <num_of_jobs> <priority_levels>\n     <min_CPU_time> <max_CPU_time>\n",
-	"quit: exit AUbatch\n",
-	NULL
-};
-
 // call and printout help menu
 int cmd_helpmenu(int n, char **a)
 {
@@ -164,12 +179,70 @@ static struct {
 	{ "help\n",	cmd_helpmenu },
 	{ "r",		cmd_run },
 	{ "run",	cmd_run },
-	{"list",	process_list },
+	{ "list\n",	process_list },
+	{ "l\n",	process_list },
+	{ "fcfs\n",	run_fcfs },
+	{ "sjf\n",	run_sjf },
+	{ "priority\n",	run_pri },
 	{ "q\n",	cmd_quit },
 	{ "quit\n",	cmd_quit },
-    /* Please add more operations below. */
     {NULL, NULL}
 };
+
+//////////////////////////////////////////////////////////
+//////// SCHEDULING
+
+// sort running process list in fcfs 
+int run_fcfs(int nargs, char **args)
+{
+	// switch policy and print
+	policy = fcfs;
+	printf("Scheduling policy is switched to FCFS. All the %d waiting jobs have been rescheduled.\n", buff_next - buff_prev);
+
+	// sort if there are processes
+	if (p_waiting)
+	{
+		sort_process_list(running_processes);
+	}
+
+	// return
+	return 0;
+}
+
+// sort running process list in sjf 
+int run_sjf(int nargs, char **args)
+{
+	// switch policy and print
+	policy = sjf;
+	printf("Scheduling policy is switched to SJF. All the %d waiting jobs have been rescheduled.\n", buff_next - buff_prev);
+
+	// sort if there are processes
+	if (p_waiting)
+	{
+		sort_process_list(running_processes);
+	}
+
+	// return
+	return 0;
+}
+
+// sort running process list in priority 
+int run_pri(int nargs, char **args)
+{
+	// switch policy and print
+	policy = priority;
+	printf("Scheduling policy is switched to PRIORITY. All the %d waiting jobs have been rescheduled.\n", buff_next - buff_prev);
+
+	// sort if there are processes
+	if (p_waiting)
+	{
+		sort_process_list(running_processes);
+	}
+
+	// return
+	return 0;
+}
+
 
 /*
  * Process a single command.
