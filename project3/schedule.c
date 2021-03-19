@@ -65,8 +65,12 @@ void execute_process(new_process p)
 {
     // prepare path and program arguments
     char *path = p->program;
-    char *cpu = "9"; 
-    printf("%d", p->cpu_time_remaining);
+    char *cpu = "0"; 
+    char data[200];
+    int new_cpu = p->cpu_time_remaining;
+
+    // convert to string
+    sprintf(data, "%d", new_cpu);
     char *args[] = {path, cpu, NULL};
     err_msg("At: execute process and starting", err_flag);
 
@@ -74,8 +78,12 @@ void execute_process(new_process p)
     if (!strcmp(p->program, "./dispatch"))
     {
         err_msg("At: execute process in strcomp", err_flag);
-        //sprintf(args[1], "%d", p->cpu_time_remaining);
+        args[1] = data;
         err_msg("At: execute process after strcmp", err_flag);
+    }
+    else
+    {
+        args[1] = "NULL";
     }
     err_msg("At: execute process about to do execv", err_flag);
 
@@ -89,7 +97,8 @@ void execute_process(new_process p)
     else if (child_process == 0)
     {
         execv(path, args);
-        printf(">");
+        printf("EXECV FAILED! EXITING...");
+        exit(0);
     }
 
     err_msg("At: execute process after execv", err_flag);
@@ -104,6 +113,7 @@ void execute_process(new_process p)
     err_msg("At: execute process, finished", err_flag);
     // free up memory
     free(p);  
+
 }
 
 // update finished process list

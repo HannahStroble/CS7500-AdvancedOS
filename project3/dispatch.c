@@ -14,19 +14,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int main(int argc, char *argv[] )
+void main(int argc, char *argv[])
 {
-  int i = 1;
-  printf("A process is running ...\n");
-  argc--;
-
-  /* Print all the arguments passed from the commandline */
-  while (argc > 0) {
-    printf ("Argument %d is: %s\n", i, argv[i]);
-    sleep(atoi(argv[i]));
-    i++;
-    argc--;
-  }
-
-  return 0;
+  // use cpu for i amount of time
+  //printf("your number is: %s", argv[1]);
+  sleep(3);
 }
