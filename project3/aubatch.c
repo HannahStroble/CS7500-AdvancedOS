@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <sys/types.h>
+#include <stdbool.h>
 
 // local libraries
 #include "commandline.h"
@@ -22,40 +23,12 @@
 // MOVED VARS
 /////////////////////////////////////////////////
 
-typedef unsigned int u_int; 
-
-//#define LOW_ARRIVAL_RATE /* Long arrivel-time interval */
-#define LOW_SERVICE_RATE   /* Long service time */
-
-/* 
- * Static commands are submitted to the job queue.
- * When comment out the following macro, job are submitted by users.
- */
-//#define STATIC_COMMAND 
-
-#define CMD_BUF_SIZE 10 /* The size of the command queueu */
-#define NUM_OF_CMD   5  /* The number of submitted jobs   */
-#define MAX_CMD_LEN  512 /* The longest commandline length */
-
 /* 
  * When a job is submitted, the job must be compiled before it
  * is running by the executor thread (see also executor()).
  */
-//void *commandline( void *ptr ); /* To simulate job submissions and scheduling */
-//void *executor( void *ptr );    /* To simulate job execution */
-
-pthread_mutex_t cmd_queue_lock;  /* Lock for critical sections */
-pthread_cond_t cmd_buf_not_full; /* Condition variable for buf_not_full */
-pthread_cond_t cmd_buf_not_empty; /* Condition variable for buf_not_empty */
-
-/* Global shared variables */
-u_int buf_head;
-u_int buf_tail;
-u_int count;
-char *cmd_buffer[CMD_BUF_SIZE];
 
 ///////////////////////////////////////////////////////
-
 
 int main(int argc, char *argv[])
 { 
@@ -80,13 +53,14 @@ int main(int argc, char *argv[])
     int  iret1, iret2;
 
     /* Initilize count, two buffer pionters */
-    count = 0; 
-    buf_head = 0;  
-    buf_tail = 0; 
+    p_waiting = 0; 
+    buff_next = 0;  
+    buff_prev = 0;
+    err_flag = 1; 
 
     /* Create two independent threads:command and executors */
     iret1 = pthread_create(&command_thread, NULL, commandline, (void*) message1);
-    //iret2 = pthread_create(&executor_thread, NULL, executor, (void*) message2);
+    iret2 = pthread_create(&executor_thread, NULL, dispatch, (void*) message2);
 
     /* Initialize the lock the two condition variables */
     pthread_mutex_init(&cmd_queue_lock, NULL);
@@ -97,10 +71,10 @@ int main(int argc, char *argv[])
     /* wait we run the risk of executing an exit which will terminate   */
     /* the process and all threads before the threads have completed.   */
     pthread_join(command_thread, NULL);
-    //pthread_join(executor_thread, NULL); 
+    pthread_join(executor_thread, NULL); 
 
     printf("command_thread returns: %d\n",iret1);
-    //printf("executor_thread returns: %d\n",iret2);
+    printf("executor_thread returns: %d\n",iret2);
     exit(0);
 
     ///////////////////////////////////////////////////

@@ -6,3 +6,4 @@ void showmenu(const char *x[]);
 int cmd_helpmenu(int n, char **a);
 int cmd_dispatch(char *cmd);
 void *commandline( void *ptr );
+int process_list();

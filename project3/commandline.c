@@ -14,9 +14,11 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <assert.h>
+#include <stdbool.h>
 
 // Local files
 #include "commandline.h"
+#include "schedule.h"
 
 /* Error Code */
 #define EINVAL       1
@@ -34,8 +36,11 @@ int cmd_run(int nargs, char **args) {
 		return EINVAL;
 	}   
         /* Use execv to run the submitted job in AUbatch */
-        printf("use execv to run the job in AUbatch.\n");
-      	return 0; /* if succeed */
+		err_msg("At: cmd_run before scheduler", err_flag);
+		scheduler(nargs, args);
+		err_msg("Finished: cmd_run after scheduler", err_flag);
+
+		return 0; /* if succeed */
 }
 
 /*
@@ -44,6 +49,63 @@ int cmd_run(int nargs, char **args) {
 int cmd_quit(int nargs, char **args) {
 	printf("Please display performance information before exiting AUbatch!\n");
   	exit(0);
+}
+
+// list processes
+int process_list()
+{
+	// check if there are any running processes
+	if ((finished_next != 0) || (p_waiting != 0))
+	{
+		// counter
+		int i;
+
+		// print format
+		printf("Name	CPU_Time	Pri	Arrival_time	Progress");
+
+		// iterate through finished processes
+		for (i=0; i < finished_next; i++)
+		{
+			// define current finished process
+			new_process p_finish = finished_processes[i];
+			char *stat = "finished";
+			char *time = p_finish->arrival_time;
+			printf("%s %d %d %s %s\n",
+					p_finish->program,
+					p_finish->cpu_time,
+					p_finish->priority,
+					time, stat);
+		}
+
+		// iterate through waiting processes
+		for (i=0; i < buff_next; i++)
+		{
+			// define current waiting processes
+			new_process p_wait = running_processes[i];
+			char *stat = "---waiting---";
+
+			// check if there is remaining burst time
+			if ((p_wait->cpu_first_time > 0)&&(p_wait->cpu_time_remaining > 0))
+			{
+				stat = "running";
+			}
+
+			// print out format
+			char *time = p_wait->arrival_time;
+			printf("%s %d %d %s %s\n", 
+					p_wait->program,
+					p_wait->cpu_time,
+					p_wait->priority,
+					time, stat);
+		}
+	}
+	else
+	{
+		printf("No processes are running.\n");
+	}
+
+	// return 
+	return 0;
 }
 
 /*
@@ -102,6 +164,7 @@ static struct {
 	{ "help\n",	cmd_helpmenu },
 	{ "r",		cmd_run },
 	{ "run",	cmd_run },
+	{"list",	process_list },
 	{ "q\n",	cmd_quit },
 	{ "quit\n",	cmd_quit },
     /* Please add more operations below. */

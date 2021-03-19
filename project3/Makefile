@@ -8,19 +8,19 @@
 # compile aubatch executable
 aubatch: aubatch.c commandline.o schedule.o
 	@echo "Starting to compile aubatch..."
-	gcc -o aubatch aubatch.c commandline.o schedule.o -lpthread
+	gcc -o aubatch aubatch.c commandline.o schedule.o -lpthread -Wall
 	@echo "Finished!"
 
 # compile commandline executable
 commandline.o: commandline.c
 	@echo "Starting to compile commandline..."
-	gcc -c commandline.c -lpthread
+	gcc -c commandline.c -lpthread -Wall
 	@echo "Finished!"
 
 # compile schedule executable
 schedule.o: schedule.c
 	@echo "Strated to compile schedule..."
-	gcc -c schedule.c -lpthread
+	gcc -c schedule.c -lpthread -Wall
 	@echo "Finished!"
 
 
