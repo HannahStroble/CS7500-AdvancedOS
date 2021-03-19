@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <sys/wait.h>
 
 // local libraries
 #include "schedule.h"
@@ -60,27 +61,22 @@ void execute_process(new_process p)
 {
     // prepare path and program arguments
     char *path = p->program;
-    char *cpu = "0"; 
     char data[200];
     int new_cpu = p->cpu_time_remaining;
 
     // convert to string
     sprintf(data, "%d", new_cpu);
-    char *args[] = {path, cpu, NULL};
+    char *args[] = {path, "0", NULL};
 
     // make sure the command is legit
     if (!strcmp(p->program, "./dispatch"))
     {
         args[1] = data;
     }
-    else
-    {
-        args[1] = "NULL";
-    }
 
     // execute program with execv
     pid_t child_process, wpid;
-    int status = 0;
+    int child_status = 0;
     child_process = fork();
 
     // start child fork
@@ -95,14 +91,19 @@ void execute_process(new_process p)
         exit(0);
     }
 
+    if (p->cpu_first_time == 0)
+    {
+        p->cpu_first_time = time(NULL);
+    }
+
     // wait for child process to complete before updating finished list
-    while ((wpid = wait(&status)) > 0);
+    while ((wpid = wait(&child_status)) > 0);
 
     // clear out cpu time remaining
-    p->cpu_time_remaining = 0;
+    //p->cpu_time_remaining = 0;
 
     // create finished process
-    memcpy(finished_processes[finished_next], current_process, sizeof(current_process));
+    memcpy(&finished_processes[finished_next], &running_processes[buff_prev], sizeof(current_process));
 
     // update finished process list
     finished_next++;
