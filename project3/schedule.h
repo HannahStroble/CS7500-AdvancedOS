@@ -84,5 +84,5 @@ void run_benchmark(char *bench_name, int cjobs, int arrival, int pri, int min_cp
 // extra programs
 void err_msg(char *item, bool err_flag);
 char *get_policy();
-void set_policy(char *item);
+int set_policy(char *item);
 

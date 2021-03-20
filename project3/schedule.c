@@ -69,7 +69,7 @@ void execute_process(new_process p)
     char *args[] = {path, "0", NULL};
 
     // make sure the command is legit
-    if (!strcmp(p->program, "./dispatch"))
+    if (!strcmp(p->program, "./micro"))
     {
         args[1] = data;
     }
@@ -341,6 +341,9 @@ int i;
 for (i = 0; i < cjobs; i++)
 {
 
+    // set random factor seed
+	srand(1);
+
     if (i >= QUEUE_MAX_LEN)
     {
         pthread_cond_signal(&cmd_buf_not_empty);
@@ -380,7 +383,7 @@ for (i = 0; i < cjobs; i++)
     p->finish_time = 0;
     p->arrival_time = time(NULL);
     strcpy(p->job_name, new_name);
-    strcpy(p->program, "./dispatch");
+    strcpy(p->program, "./micro");
 
     // print info about jobs
     //char *n_policy = get_policy();
@@ -389,7 +392,7 @@ for (i = 0; i < cjobs; i++)
     running_processes[buff_next] = p;
 
     // lock to edit process list
-    //pthread_mutex_lock(&cmd_queue_lock);
+    pthread_mutex_lock(&cmd_queue_lock);
 
     // inc counters
     p_waiting++;
@@ -419,80 +422,7 @@ for (i = 0; i < cjobs; i++)
     }
 
 }
-    /*
-    // set arrival rate
-    if (!arrival)
-    {
-        b_job = 1;
-    }
-    else
-    {
-        b_job = 0;
-    }
-    printf("run benchmark: after bjob");
 
-    // create jobs
-    int j;
-    for (j=0; j < cjobs; j++)
-    {
-        // wait if number of jobs is too big
-        if (j >= QUEUE_MAX_LEN)
-        {
-            pthread_cond_signal(&cmd_buf_not_empty);
-        }
-
-        // unlock 
-        pthread_mutex_unlock(&cmd_queue_lock);
-
-        printf("run benchmark: after locks");
-
-        // create process
-        new_process p = malloc(sizeof(n_process));
-
-        // initialize process
-        int priority = (rand() % (pri + 1)) + 1;
-        int cpu = (rand() % (max_cpu+1))+min_cpu;
-        strcpy(p->program, "./dispatch");
-        p->arrival_time = time(NULL);
-        p->cpu_time = cpu;
-        p->cpu_time_remaining = cpu;
-        p->priority = priority;
-        p->cpu_first_time = 0;
-
-        printf("run benchmark: made and filled process");
-
-        // add to process list
-        running_processes[buff_next] = p;
-
-        // inc pointers and sort
-        p_waiting++;
-        buff_next++;
-        sort_process_list(running_processes);
-        buff_next %= QUEUE_MAX_LEN;
-
-        printf("run benchmark: sorted list\n");
-
-        // unlock
-        pthread_mutex_unlock(&cmd_queue_lock);
-
-        // wait for all jobs to process
-        if (arrival)
-        {
-            // sleep
-            pthread_cond_signal(&cmd_buf_not_empty);
-            sleep(arrival);
-        }
-        printf("run benchmark: after sleeping for arrival\n");
-    }
-
-    printf("run benchmark: out of main\n");
-    // if arrival rate is 0 then no jobs are running so run all jobs
-    if (!arrival)
-    {
-        pthread_cond_signal(&cmd_buf_not_empty);
-    }
-    printf("run benchmark: finished last pthread\n");
-}*/
 
 ////////////////////////////////////////////////////////
 //// EXTRA 
@@ -526,25 +456,31 @@ char *get_policy()
     return "NULL";
 }
 
-void set_policy(char *item)
+int set_policy(char *item)
 {
-    if (!strcmp(item, "fcfs"))
+    // set policy
+	if (!strcmp(policy_name, "fcfs"))
 	{
 		policy = fcfs;
+		return 0;
 	}
-	else if (!strcmp(item, "sjf"))
+	else if (!strcmp(policy_name, "sjf"))
 	{
 		policy = sjf;
-		printf("set policy\n");
+		return 0;
 	}
-	else if (!strcmp(item, "priority"))
+	else if (!strcmp(policy_name, "priority"))
 	{
 		policy = priority;
+		return 0;
 	}
 	else
 	{
 		printf("Policy must be fcfs, sjf, or priority.\n");
+		return 1;
 	}
+
+    return 1;
 }
 
 

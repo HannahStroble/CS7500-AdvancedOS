@@ -2,7 +2,8 @@
 // COMP7500 - Project 3 - A Pthread-based Batch Scheduling System
 // Name: Hannah Reinbolt
 // Date: 3/14/2021
-// Description: Interact with the users
+// Description: Commandline user interface
+// Note: Referenced code provided by Dr. Qin
 //////////////////////////////////////////
 
 
@@ -20,146 +21,25 @@
 #include "commandline.h"
 #include "schedule.h"
 
-/*
- * The run command - submit a job.
- */
-int cmd_run(int nargs, char **args) {
-	if (nargs != 4) {
-		printf("Usage: run <job> <time> <priority>\n");
-		return EINVAL;
-	}   
 
-	// make sure the file exists
-	FILE *file1 = fopen(args[1], "r");
-	if (file1 == NULL)
-	{
-		printf("File does not exist. Please enter valid file path and name.\n");
-		return EINVAL;
-	}
-
-	// close file, we were just checking
-	fclose(file1);
-
-    /* Use execv to run the submitted job in AUbatch */
-	err_msg("At: cmd_run before scheduler", err_flag);
-	scheduler(nargs, args);
-	err_msg("Finished: cmd_run after scheduler", err_flag);
-
-	return 0; /* if succeed */
-}
-
-//////////////////////////////////////////////
-//// METRICS
-
-int run_bench(int nargs, char **argv)
-{
-	printf("run bench: srand0");
-
-	srand(0);
-	printf("args %d\n", nargs);
-	// check to make sure correct function usage
-	if (nargs != 8)
-	{
-		// print error
-		printf("Usage: test <benchmark> <policy> <num_of_jobs> <arrival_rate> <priority_levels> <min_CPU_time> <max_cpu_time>\n");
-		return EINVAL;
-	}
-	else if (p_waiting || finished_next)
-	{
-		printf("Processes are running on CPU, no jobs should be running if doing a benchmark.\n");
-		return EINVAL;
-	}
-	printf("run bench: af ter init checks");
-	//memset(finished_processes, 0, sizeof(finished_processes));
-	//memset(running_processes, 0, sizeof(running_processes));
-
-	// collect variables for benchmark
-	char *bench_name = argv[1];
-	char *policy_name = argv[2];
-	int num_jobs = atoi(argv[3]);
-	int arrival_rate = atoi(argv[4]);
-	int priority_lvl = atoi(argv[5]);
-	int minc = atoi(argv[6]);
-	int maxc = atoi(argv[7]);
-
-	//printf("printing vars: bench %s pol %s job %d plvl %d minc %d maxc %d\n", bench, pol, n_j, p_lvl, minc, maxc );
-
-	printf("run bench: after vars");
-
-	// make sure min is not bigger than max
-	if (minc >= maxc)
-	{
-		printf("Min CPU time cannot be bigger than or equal to Max CPU time.\n");
-		return EINVAL;
-	}
-	// make sure all variables are not negative
-	else if (num_jobs <= 0 || minc < 0 || maxc < 0 || priority_lvl < 0 || arrival_rate < 0)
-	{
-		printf("Initial benchmark variables cannot be less than zero.\n");
-		return EINVAL;
-	}
-	printf("POLICY %s\n", policy_name);
-	
-	// set policy
-	if (!strcmp(policy_name, "fcfs"))
-	{
-		policy = fcfs;
-	}
-	else if (!strcmp(policy_name, "sjf"))
-	{
-		policy = sjf;
-		printf("set policy\n");
-	}
-	else if (!strcmp(policy_name, "priority"))
-	{
-		policy = priority;
-	}
-	else
-	{
-		printf("Policy must be fcfs, sjf, or priority.\n");
-		return EINVAL;
-	}
-
-	printf("run bench: after policy");
-
-	// run benchmark
-	run_benchmark(bench_name, num_jobs, arrival_rate, priority_lvl, minc, maxc);
-	printf("run bench: ran bench");
-	while(p_waiting)
-	{
-
-	}
-
-	printf("run bench: after while crocadile\n");
-	// print metrics
-	performance_metrics();
-	printf("run bench: after metrics");
-
-	// clear out list for later processes
-	int k;
-
-	for (k = 0; k < finished_next; k++)
-	{
-		free(finished_processes[k]);
-	}
-	
-	printf("run bench: after freeup\n");
-	finished_next = 0;
-	buff_next = 0;
-	buff_prev = 0;
-
-	// return 
-	return 0;
-
-}
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+///////////    HELP, QUIT and LIST FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
 
 
-////////////////////////////////////////////
-////////////////////////////////////////////
-//////////REPORTING
-/*
- * The quit command.
- */
+////////////////////////////////////////////////
+// name: cmd_quit
+// use: quit user interface terminal
+// description: exit out of the user interface terminal
+//
+// input: int nargs
+// input description: number of arguments in args array
+// input: char **args
+// input description: char array of arguments
+// output: int
+// output description: dummy value for the commandline processor
+////////////////////////////////////////////////
 int cmd_quit(int nargs, char **args) {
 	
 	// print metrics and exit
@@ -167,18 +47,33 @@ int cmd_quit(int nargs, char **args) {
 	exit(0);
 }
 
-// list processes
+
+////////////////////////////////////////////////
+// name: process_list
+// use: print running and waiting processes
+// description: print currently running and waiting processes
+//
+// input: int nargs
+// input description: number of arguments in args array
+// input: char **args
+// input description: char array of arguments
+// output: int
+// output description: dummy value for the commandline processor
+////////////////////////////////////////////////
 int process_list(int nargs, char **args)
 {
+	// while there are processes waiting
 	if (p_waiting > 0)
 	{
-		// counter
+		// counters
 		int i;
 		char *j_status;
 		struct tm time2;
+
+		// get string policy
 		char* curr_policy = get_policy(); 
 
-		// print format
+		// print statistics
 		printf("Total number of jobs in the queue: %d\n", buff_next - buff_prev);
 		printf("Scheduling Policy: %s\n", curr_policy);
 		printf("Name\tCPU_Time\tPri\tArrival_time\tProgress\n");
@@ -189,18 +84,21 @@ int process_list(int nargs, char **args)
 			// define current waiting processes
 			j_status = "";
 
+			// skip if the processes has finished executing
 			if (running_processes[i]->cpu_time_remaining == 0)
 			{
 				continue;
 			}
+			// mark as running process
 			else if (running_processes[i]->cpu_first_time > 0 && running_processes[i]->cpu_time_remaining > 0)
 			{
 				j_status = "Run";
 			}
 
-			// print out format 
+			// current time
 			time2 = *localtime(&running_processes[i]->arrival_time);
 			
+			// print processes
 			printf("%s\t%d\t\t%d\t%02d:%02d:%02d\t%s\t\n", 
 			running_processes[i]->job_name, 
 			running_processes[i]->cpu_time, 
@@ -211,18 +109,45 @@ int process_list(int nargs, char **args)
 			j_status);
 		}
 	}
+
+	// else no processes are running
 	else
 	{
 		printf("No processes are running.\n");
 	}
 
-	// return 
+	// exit
 	return 0;
 }
 
-/*
- * Display menu information
- */
+
+////////////////////////////////////////////////
+// name: helpmenu
+// use: printout for help menu
+// description: printout for the help menu called by cmd_helpmenu
+////////////////////////////////////////////////
+static const char *helpmenu[] = {
+	"run <job> <time> <pri>: submit a job named <job>,\n\t\t\texecution time is <time>,\n\t\t\tpriority is <pri>.\n",
+	"list: display the job status.\n",
+	"fcfs: change the scheduling policy to FCFS.\n",
+	"sjf: change the scheduling policy to SJF.\n",
+	"priority: change the scheduling policy to priority.\n",
+	"test <benchmark> <policy> <num_of_jobs> <priority_levels>\n     <min_CPU_time> <max_CPU_time>\n",
+	"quit: exit AUbatch\n",
+	NULL
+};
+
+
+////////////////////////////////////////////////
+// name: showmenu
+// use: print help menu
+// description: print help menu
+//
+// input: const char *x
+// input description: char array of characters to print
+// output: void
+// output description: nothing
+////////////////////////////////////////////////
 void showmenu(const char *x[])
 {
 	// counter
@@ -239,7 +164,19 @@ void showmenu(const char *x[])
 	printf("\n");
 }
 
-// call and printout help menu
+
+////////////////////////////////////////////////
+// name: cmd_helpmenu
+// use: call print help menu command
+// description: read in user input and print help menu
+//
+// input: int n
+// input description: number of arguments in args array
+// input: char **a
+// input description: char array of arguments
+// output: int
+// output description: dummy value for the commandline processor
+////////////////////////////////////////////////
 int cmd_helpmenu(int n, char **a)
 {
 	// default number of args and char array of entry to print
@@ -251,14 +188,243 @@ int cmd_helpmenu(int n, char **a)
 	return 0;
 }
 
-/*
- *  Command table.
- */
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////      SCHEDULING FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////
+// name: run_fcfs
+// use: switch scheduling policy to First Come First Serve
+// description: switch scheduling policy and re-sort list of waiting processes
+//
+// input: int nargs
+// input description: number of arguments in args array
+// input: char **args
+// input description: char array of arguments
+// output: int
+// output description: dummy value for the commandline processor
+////////////////////////////////////////////////
+int run_fcfs(int nargs, char **args)
+{
+	// switch policy and print
+	policy = fcfs;
+	printf("Scheduling policy is switched to FCFS. All the %d waiting jobs have been rescheduled.\n", (buff_next - buff_prev)-1);
+
+	// sort if there are processes
+	if (p_waiting)
+	{
+		sort_process_list(running_processes);
+	}
+
+	// exit
+	return 0;
+}
+
+
+////////////////////////////////////////////////
+// name: run_sjf
+// use: switch scheduling policy to Shortest Job First
+// description: switch scheduling policy and re-sort list of waiting processes
+//
+// input: int nargs
+// input description: number of arguments in args array
+// input: char **args
+// input description: char array of arguments
+// output: int
+// output description: dummy value for the commandline processor
+////////////////////////////////////////////////
+int run_sjf(int nargs, char **args)
+{
+	// switch policy and print
+	policy = sjf;
+	printf("Scheduling policy is switched to SJF. All the %d waiting jobs have been rescheduled.\n", (buff_next - buff_prev)-1);
+
+	// sort if there are processes
+	if (p_waiting)
+	{
+		sort_process_list(running_processes);
+	}
+
+	// exit
+	return 0;
+}
+
+
+////////////////////////////////////////////////
+// name: run_pri
+// use: switch scheduling policy to Priority Sort
+// description: switch scheduling policy and re-sort list of waiting processes
+//
+// input: int nargs
+// input description: number of arguments in args array
+// input: char **args
+// input description: char array of arguments
+// output: int
+// output description: dummy value for the commandline processor
+////////////////////////////////////////////////
+int run_pri(int nargs, char **args)
+{
+	// switch policy and print
+	policy = priority;
+	printf("Scheduling policy is switched to PRIORITY. All the %d waiting jobs have been rescheduled.\n", (buff_next - buff_prev)-1);
+
+	// sort if there are processes
+	if (p_waiting)
+	{
+		sort_process_list(running_processes);
+	}
+
+	// exit
+	return 0;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+////////////    BENCHMARK FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////
+// name: run_bench
+// use: run multiple processes automatically
+// description: test algorithm and process efficiency automatically
+//
+// input: int nargs
+// input description: number of arguments in args array
+// input: char **args
+// input description: char array of arguments
+// output: int
+// output description: dummy value for the commandline processor
+////////////////////////////////////////////////
+int run_bench(int nargs, char **argv)
+{
+	// check to make sure correct number of args are sent
+	if (nargs != 8)
+	{
+		// print error
+		printf("Usage: test <benchmark> <policy> <num_of_jobs> <arrival_rate> <priority_levels> <min_CPU_time> <max_cpu_time>\n");
+		return EINVAL;
+	}
+	// make sure no other jobs are running
+	else if (p_waiting || finished_next)
+	{
+		printf("Processes are running on CPU, no jobs should be running if doing a benchmark.\n");
+		return EINVAL;
+	}
+
+	// collect variables for benchmark process
+	char *bench_name = argv[1];
+	char *policy_name = argv[2];
+	int num_jobs = atoi(argv[3]);
+	int arrival_rate = atoi(argv[4]);
+	int priority_lvl = atoi(argv[5]);
+	int minc = atoi(argv[6]);
+	int maxc = atoi(argv[7]);
+
+	// make sure min is not bigger than max
+	if ((minc >= maxc) || (num_jobs <= 0 || minc < 0 || maxc < 0 || priority_lvl < 0 || arrival_rate < 0))
+	{
+		printf("Min CPU time cannot be bigger than or equal to Max CPU time.\n");
+		printf("Initial benchmark variables cannot be less than zero.\n");
+		return EINVAL;
+	}
+	
+	// set policy
+	int policy_result = set_policy(policy_name);
+
+	// return 0 if failed
+	if (policy_result == 1)
+	{
+		return EINVAL;
+	}
+
+	// run benchmark
+	run_benchmark(bench_name, num_jobs, arrival_rate, priority_lvl, minc, maxc);
+
+	// wait till nothing is processing anymore
+	while(p_waiting) { }
+
+	// print metrics
+	performance_metrics();
+
+	// free memory from finished queue
+	int k;
+	for (k = 0; k < finished_next; k++)
+	{
+		// free memory
+		free(finished_processes[k]);
+	}
+	
+	// reset counters
+	finished_next = 0;
+	buff_next = 0;
+	buff_prev = 0;
+
+	// exit 
+	return 0;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//////    COMMANDLINE and PROCESS EXECUTION FUNCTIONS        
+////////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////
+// name: cmd_run
+// use: send new processes to the process scheduler
+// description: send new processes to the process scheduler and add to queue
+//
+// input: int nargs
+// input description: number of arguments in args array
+// input: char **args
+// input description: char array of arguments
+// output: int
+// output description: dummy value for the commandline processor
+////////////////////////////////////////////////
+int cmd_run(int nargs, char **args) {
+
+	// check for correct number of arguments
+	if (nargs != 4) {
+		printf("Usage: run <job> <time> <priority>\n");
+		return EINVAL;
+	}   
+
+	// make sure the file exists
+	FILE *file1 = fopen(args[1], "r");
+	if (file1 == NULL)
+	{
+		// exit if doesn't exist
+		printf("File does not exist. Please enter valid file path and name.\n");
+		return EINVAL;
+	}
+
+	// close file, we were just checking
+	fclose(file1);
+
+    // send file to process scheduler to create new process and add to process queue
+	scheduler(nargs, args);
+
+	// if success
+	return 0;
+}
+
+
+////////////////////////////////////////////////
+// name: cmdtable
+// use: organize all the commandline commands
+// description: so the dispatch function can quickly associate user input with real commands
+////////////////////////////////////////////////
 static struct {
 	const char *name;
 	int (*func)(int nargs, char **args);
 } cmdtable[] = {
-	/* commands: single command must end with \n */
+	// commands: single command must end with \n 
 	{ "?\n",	cmd_helpmenu },
 	{ "h\n",	cmd_helpmenu },
 	{ "help\n",	cmd_helpmenu },
@@ -275,78 +441,32 @@ static struct {
     {NULL, NULL}
 };
 
-//////////////////////////////////////////////////////////
-//////// SCHEDULING
 
-// sort running process list in fcfs 
-int run_fcfs(int nargs, char **args)
-{
-	// switch policy and print
-	policy = fcfs;
-	printf("Scheduling policy is switched to FCFS. All the %d waiting jobs have been rescheduled.\n", (buff_next - buff_prev)-1);
-
-	// sort if there are processes
-	if (p_waiting)
-	{
-		sort_process_list(running_processes);
-	}
-
-	// return
-	return 0;
-}
-
-// sort running process list in sjf 
-int run_sjf(int nargs, char **args)
-{
-	// switch policy and print
-	policy = sjf;
-	printf("Scheduling policy is switched to SJF. All the %d waiting jobs have been rescheduled.\n", (buff_next - buff_prev)-1);
-
-	// sort if there are processes
-	if (p_waiting)
-	{
-		sort_process_list(running_processes);
-	}
-
-	// return
-	return 0;
-}
-
-// sort running process list in priority 
-int run_pri(int nargs, char **args)
-{
-	// switch policy and print
-	policy = priority;
-	printf("Scheduling policy is switched to PRIORITY. All the %d waiting jobs have been rescheduled.\n", (buff_next - buff_prev)-1);
-
-	// sort if there are processes
-	if (p_waiting)
-	{
-		sort_process_list(running_processes);
-	}
-
-	// return
-	return 0;
-}
-
-
-/*
- * Process a single command.
- */
+////////////////////////////////////////////////
+// name: cmd_dispatch
+// use: process a single command from the commandline
+// description: process or execute a command from the commandline menu
+//
+// input: char *cmd
+// input description: name of command to execute
+// output: int
+// output description: dummy value for the commandline processor
+////////////////////////////////////////////////
 int cmd_dispatch(char *cmd)
 {
-	time_t beforesecs, aftersecs, secs;
-	u_int32_t beforensecs, afternsecs, nsecs;
+	// local variables
 	char *args[MAXMENUARGS];
 	int nargs=0;
 	char *word;
 	char *context;
  	int i, result;
 
+	// keep reading till empty
 	for (word = strtok_r(cmd, " ", &context);
 	     word != NULL;
 	     word = strtok_r(NULL, " ", &context)) {
 
+		// don't go over static argument limit
 		if (nargs > MAXMENUARGS) {
 			printf("Command line has too many words\n");
 			return E2BIG;
@@ -354,50 +474,68 @@ int cmd_dispatch(char *cmd)
 		args[nargs++] = word;
 	}
 
+	// if done then return
 	if (nargs==0) {
 		return 0;
 	}
 
+	// for each command called
 	for (i=0; cmdtable[i].name; i++) {
-		printf("cmd table: first\n");
+		
+		// send all arguments to specified function
 		if (*cmdtable[i].name && !strcmp(args[0], cmdtable[i].name)) {
 			assert(cmdtable[i].func!=NULL);
-            printf("cmd table: second\n");
-            /*Qin: Call function through the cmd_table */
+			
+            // call function through the cmd_table 
 			result = cmdtable[i].func(nargs, args);
-			printf("cmd table: third\n");
-			printf("cmd table: third\n");
-			printf("cmd table: third\n");
-			printf("cmd table: third\n");
-			sleep(5);
-			//printf("result: %d", result);
+
+			//return result
 			return result;
 		}
 	}
 
+	// command not found if have not returned yet
 	printf("%s: Command not found\n", args[0]);
 	return EINVAL;
 }
 
-/*
- * Command line main loop.
- */
+
+////////////////////////////////////////////////
+// name: commandline
+// use: commandline to execute processes
+// description: commandline that executes, lists and tests processes
+//
+// input: void *ptr
+// input description: a void pointer
+// output: void
+// output description: returns nothing or zero
+////////////////////////////////////////////////
 void *commandline( void *ptr )
 {
+		// local variables
 	    char *buffer;
         size_t bufsize = 64;
         
+		// allocate memory for user input string
         buffer = (char*) malloc(bufsize * sizeof(char));
-        if (buffer == NULL) {
- 		perror("Unable to malloc buffer");
- 		exit(1);
-	}
 
-    while (1) {
-		printf("\n>");
-		getline(&buffer, &bufsize, stdin);
-		cmd_dispatch(buffer);
-	}
+		// if failed then exit
+        if (buffer == NULL) 
+		{
+ 			perror("Unable to malloc buffer");
+ 			exit(1);
+		}
+
+		// forever ask for input
+    	while (1) 
+		{
+			// get user input and send to dispatch for processing
+			printf("\n>");
+			getline(&buffer, &bufsize, stdin);
+			cmd_dispatch(buffer);
+		}
+
+		// exit
         return 0;
 }
 

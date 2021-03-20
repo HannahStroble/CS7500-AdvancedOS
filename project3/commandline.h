@@ -1,23 +1,18 @@
-// helperfile
+//////////////////////////////////////
+// COMP7500 - Project 3 - A Pthread-based Batch Scheduling System
+// Name: Hannah Reinbolt
+// Date: 3/14/2021
+// Description: Commandline user interface global variables
+// Note: Referenced code provided by Dr. Qin
+//////////////////////////////////////////
 
-/* Error Code */
+// errors
 #define EINVAL       1
 #define E2BIG        2
 
+// commandline
 #define MAXMENUARGS  8 
 #define MAXCMDLINE   64 
-
-// help menu struct or text
-static const char *helpmenu[] = {
-	"run <job> <time> <pri>: submit a job named <job>,\n\t\t\texecution time is <time>,\n\t\t\tpriority is <pri>.\n",
-	"list: display the job status.\n",
-	"fcfs: change the scheduling policy to FCFS.\n",
-	"sjf: change the scheduling policy to SJF.\n",
-	"priority: change the scheduling policy to priority.\n",
-	"test <benchmark> <policy> <num_of_jobs> <priority_levels>\n     <min_CPU_time> <max_CPU_time>\n",
-	"quit: exit AUbatch\n",
-	NULL
-};
 
 // commandline
 int cmd_quit(int nargs, char **args); 

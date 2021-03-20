@@ -2,7 +2,13 @@
 // COMP7500 - Project 3 - A Pthread-based Batch Scheduling System
 // Name: Hannah Reinbolt
 // Date: 3/14/2021
-// Description: Run everything in main, sync main variables.
+// Description: Run everything in main, sync main variables, execute threads.
+// Note: Referenced code provided by Dr. Qin
+//
+// How to run:
+// >> make
+// >> ./aubatch
+//
 ///////////////////////////////////////////////////////////////////
 
 // libraries
