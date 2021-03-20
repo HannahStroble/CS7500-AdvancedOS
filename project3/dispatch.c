@@ -18,5 +18,5 @@ void main(int argc, char *argv[])
 {
   // use cpu for i amount of time
   //printf("your number is: %s", argv[1]);
-  sleep(20);
+  sleep(2);
 }

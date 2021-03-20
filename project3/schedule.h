@@ -60,7 +60,7 @@ typedef n_process *finished_process;
 
 // process queues
 new_process running_processes[QUEUE_MAX_LEN];
-new_process finished_processes[10000];
+new_process finished_processes[100000];
 new_process current_process;
 
 // dispatcher functions

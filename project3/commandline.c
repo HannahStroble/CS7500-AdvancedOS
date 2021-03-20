@@ -20,25 +20,6 @@
 #include "commandline.h"
 #include "schedule.h"
 
-/* Error Code */
-#define EINVAL       1
-#define E2BIG        2
-
-#define MAXMENUARGS  4 
-#define MAXCMDLINE   64 
-
-// help menu struct or text
-static const char *helpmenu[] = {
-	"run <job> <time> <pri>: submit a job named <job>,\n\t\t\texecution time is <time>,\n\t\t\tpriority is <pri>.\n",
-	"list: display the job status.\n",
-	"fcfs: change the scheduling policy to FCFS.\n",
-	"sjf: change the scheduling policy to SJF.\n",
-	"priority: change the scheduling policy to priority.\n",
-	"test <benchmark> <policy> <num_of_jobs> <priority_levels>\n     <min_CPU_time> <max_CPU_time>\n",
-	"quit: exit AUbatch\n",
-	NULL
-};
-
 /*
  * The run command - submit a job.
  */
@@ -73,10 +54,11 @@ int cmd_run(int nargs, char **args) {
 int run_bench(int nargs, char **argv)
 {
 	printf("run bench: srand0");
+
 	srand(0);
 	printf("args %d\n", nargs);
 	// check to make sure correct function usage
-	if (nargs != 7)
+	if (nargs != 8)
 	{
 		// print error
 		printf("Usage: test <benchmark> <policy> <num_of_jobs> <arrival_rate> <priority_levels> <min_CPU_time> <max_cpu_time>\n");
@@ -87,43 +69,66 @@ int run_bench(int nargs, char **argv)
 		printf("Processes are running on CPU, no jobs should be running if doing a benchmark.\n");
 		return EINVAL;
 	}
-	printf("run bench: after init checks");
+	printf("run bench: af ter init checks");
+	//memset(finished_processes, 0, sizeof(finished_processes));
+	//memset(running_processes, 0, sizeof(running_processes));
 
 	// collect variables for benchmark
-	char *bench = argv[1];
-	char *pol = argv[2];
-	int n_j = atoi(argv[3]);
-	int a_rate = 0;
-	int p_lvl = atoi(argv[4]);
-	int minc = atoi(argv[5]);
-	int maxc = atoi(argv[6]);
+	char *bench_name = argv[1];
+	char *policy_name = argv[2];
+	int num_jobs = atoi(argv[3]);
+	int arrival_rate = atoi(argv[4]);
+	int priority_lvl = atoi(argv[5]);
+	int minc = atoi(argv[6]);
+	int maxc = atoi(argv[7]);
 
-	printf("printing vars: bench %s pol %s job %d plvl %d minc %d maxc %d\n", bench, pol, n_j, p_lvl, minc, maxc );
+	//printf("printing vars: bench %s pol %s job %d plvl %d minc %d maxc %d\n", bench, pol, n_j, p_lvl, minc, maxc );
 
 	printf("run bench: after vars");
 
 	// make sure min is not bigger than max
-	if (minc > maxc)
+	if (minc >= maxc)
 	{
-		printf("Min CPU time cannot be bigger than Max CPU time.\n");
+		printf("Min CPU time cannot be bigger than or equal to Max CPU time.\n");
 		return EINVAL;
 	}
 	// make sure all variables are not negative
-	else if (n_j < 0 || minc < 0 || maxc < 0 || p_lvl < 0 || a_rate < 0)
+	else if (num_jobs <= 0 || minc < 0 || maxc < 0 || priority_lvl < 0 || arrival_rate < 0)
 	{
 		printf("Initial benchmark variables cannot be less than zero.\n");
 		return EINVAL;
 	}
-	printf("POLICY %s\n", pol);
+	printf("POLICY %s\n", policy_name);
+	
 	// set policy
-	set_policy(pol);
+	if (!strcmp(policy_name, "fcfs"))
+	{
+		policy = fcfs;
+	}
+	else if (!strcmp(policy_name, "sjf"))
+	{
+		policy = sjf;
+		printf("set policy\n");
+	}
+	else if (!strcmp(policy_name, "priority"))
+	{
+		policy = priority;
+	}
+	else
+	{
+		printf("Policy must be fcfs, sjf, or priority.\n");
+		return EINVAL;
+	}
 
 	printf("run bench: after policy");
 
 	// run benchmark
-	run_benchmark(bench, n_j, a_rate, p_lvl, minc, maxc);
+	run_benchmark(bench_name, num_jobs, arrival_rate, priority_lvl, minc, maxc);
 	printf("run bench: ran bench");
-	while(p_waiting){};
+	while(p_waiting)
+	{
+
+	}
 
 	printf("run bench: after while crocadile\n");
 	// print metrics
@@ -132,10 +137,12 @@ int run_bench(int nargs, char **argv)
 
 	// clear out list for later processes
 	int k;
-	for (k=0; k < finished_next; k++)
+
+	for (k = 0; k < finished_next; k++)
 	{
 		free(finished_processes[k]);
 	}
+	
 	printf("run bench: after freeup\n");
 	finished_next = 0;
 	buff_next = 0;
@@ -340,7 +347,7 @@ int cmd_dispatch(char *cmd)
 	     word != NULL;
 	     word = strtok_r(NULL, " ", &context)) {
 
-		if (nargs > MAXMENUARGS+2) {
+		if (nargs > MAXMENUARGS) {
 			printf("Command line has too many words\n");
 			return E2BIG;
 		}
@@ -352,11 +359,18 @@ int cmd_dispatch(char *cmd)
 	}
 
 	for (i=0; cmdtable[i].name; i++) {
+		printf("cmd table: first\n");
 		if (*cmdtable[i].name && !strcmp(args[0], cmdtable[i].name)) {
 			assert(cmdtable[i].func!=NULL);
-            
+            printf("cmd table: second\n");
             /*Qin: Call function through the cmd_table */
 			result = cmdtable[i].func(nargs, args);
+			printf("cmd table: third\n");
+			printf("cmd table: third\n");
+			printf("cmd table: third\n");
+			printf("cmd table: third\n");
+			sleep(5);
+			//printf("result: %d", result);
 			return result;
 		}
 	}

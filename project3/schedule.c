@@ -383,13 +383,13 @@ for (i = 0; i < cjobs; i++)
     strcpy(p->program, "./dispatch");
 
     // print info about jobs
-    char *n_policy = get_policy();
+    //char *n_policy = get_policy();
 
     // add process to current list
     running_processes[buff_next] = p;
 
     // lock to edit process list
-    pthread_mutex_lock(&cmd_queue_lock);
+    //pthread_mutex_lock(&cmd_queue_lock);
 
     // inc counters
     p_waiting++;
@@ -528,16 +528,16 @@ char *get_policy()
 
 void set_policy(char *item)
 {
-    if (strcmp(item, "fcfs"))
+    if (!strcmp(item, "fcfs"))
 	{
 		policy = fcfs;
 	}
-	else if (strcmp(item, "sjf"))
+	else if (!strcmp(item, "sjf"))
 	{
 		policy = sjf;
 		printf("set policy\n");
 	}
-	else if (strcmp(item, "priority"))
+	else if (!strcmp(item, "priority"))
 	{
 		policy = priority;
 	}
