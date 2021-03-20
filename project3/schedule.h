@@ -51,6 +51,7 @@ typedef struct
     int finish_time;                // finishing time
     time_t arrival_time;            // arrival time
     char program[PROGRAM_LEN_MAX];  // program name
+    char job_name[PROGRAM_LEN_MAX]; // job id name
 } n_process;
 
 // global queue typedefs
@@ -79,6 +80,8 @@ int switch_to_policy(const void *a, const void *b);
 
 // extra programs
 void err_msg(char *item, bool err_flag);
+char *get_policy();
+//void print_jobs(new_process *p);
 
 
 // F

@@ -91,6 +91,7 @@ void execute_process(new_process p)
         exit(0);
     }
 
+    // set cpu time to time variable
     if (p->cpu_first_time == 0)
     {
         p->cpu_first_time = time(NULL);
@@ -99,14 +100,12 @@ void execute_process(new_process p)
     // wait for child process to complete before updating finished list
     while ((wpid = wait(&child_status)) > 0);
 
-    // clear out cpu time remaining
-    //p->cpu_time_remaining = 0;
-
     // create finished process
     memcpy(&finished_processes[finished_next], &running_processes[buff_prev], sizeof(current_process));
 
     // update finished process list
     finished_next++;
+    running_processes[buff_prev]->cpu_time_remaining = 0;
 
     // free up memory
     //free(p);  
@@ -147,7 +146,7 @@ void scheduler(int argc, char **argv)
     p_waiting++;
     buff_next++;
 
-    //sort_process_list(running_processes);
+    sort_process_list(running_processes);
     buff_next %= QUEUE_MAX_LEN;
 
     // sort process list
@@ -164,6 +163,13 @@ new_process init_process(char **argv)
 {
     // init size of new process
     new_process p = malloc(sizeof(n_process));
+
+    // create job name
+    char new_name[200];
+    int id = buff_next;
+
+    // convert to string
+    sprintf(new_name, "job%d", id);
     
     // init new process
     p->cpu_time = atoi(argv[2]);
@@ -175,6 +181,7 @@ new_process init_process(char **argv)
     p->turnaround_time = 0;
     p->finish_time = 0;
     p->arrival_time = time(NULL);
+    strcpy(p->job_name, new_name);
     strcpy(p->program, argv[1]);
 
     // return process
@@ -186,8 +193,9 @@ void sort_process_list(new_process *proc_list)
 {
     // sort by index
     int i;
+    void *sort_algo = switch_to_policy;
 
-    if(!b_job)
+    if (!b_job)
     {
         i = buff_prev + 1;
     }
@@ -197,7 +205,8 @@ void sort_process_list(new_process *proc_list)
     }
 
     // quick sort
-    qsort(&running_processes[i], buff_next-i, sizeof(new_process), switch_to_policy);
+    qsort(&proc_list[i], buff_next-i, sizeof(new_process), sort_algo);
+    //print_jobs(running_processes);
 }
 
 // sorting
@@ -217,6 +226,10 @@ int switch_to_policy(const void *a, const void *b)
     else if (policy == priority)
     {
         return (p_b->priority - p_a->priority);
+    }
+    else
+    {
+        return (p_a->arrival_time - p_b->arrival_time);
     }
 
     // didn't hit a valid policy
@@ -240,6 +253,36 @@ void err_msg(char *item, bool err_flag)
     }
 }
 
+char *get_policy()
+{
+    if (policy == fcfs)
+    {
+        return "FCFS";
+    }
+    else if (policy == sjf)
+    {
+        return "SJF";
+    }
+    else if (policy == priority)
+    {
+        return "PRIORITY";
+    }
+    return "NULL";
+}
+
+/*
+void print_jobs(new_process *p)
+{
+    int i;
+    char name[200];
+
+    // print out processes
+    for (i=0; i < buff_next; i++)
+    {
+        strcpy(p->job_name, name);
+        printf("Position: %d  Job: %s ", i, name);
+    }
+}*/
 
 
 

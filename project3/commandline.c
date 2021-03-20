@@ -81,49 +81,45 @@ int cmd_quit(int nargs, char **args) {
 // list processes
 int process_list(int nargs, char **args)
 {
-	err_msg("At: list beginning", err_flag);
-	// check if there are any running processes
-	if ((finished_next > 0) || (p_waiting > 0))
+	if (p_waiting > 0)
 	{
 		// counter
 		int i;
-		struct tm time1, time2;
+		char *j_status;
+		struct tm time2;
+		char* curr_policy = get_policy(); 
 
 		// print format
+		printf("Total number of jobs in the queue: %d\n", buff_next - buff_prev);
+		printf("Scheduling Policy: %s\n", curr_policy);
 		printf("Name\tCPU_Time\tPri\tArrival_time\tProgress\n");
-
-		// iterate through finished processes
-		for (i=0; i < finished_next; i++)
-		{
-			// define current finished process
-
-			time1 = *localtime(&finished_processes[i]->arrival_time);
-			printf("%s\t%d\t%d\t%02d:%02d:%02d\tFinished\t\n", 
-			finished_processes[i]->program, 
-			finished_processes[i]->cpu_time, 
-			finished_processes[i]->priority, 
-			time1.tm_hour,
-			time1.tm_min,
-			time1.tm_sec);
-		}
 
 		// iterate through waiting processes
 		for (i=0; i < buff_next; i++)
 		{
 			// define current waiting processes
-			char *stat = "running";
+			j_status = "";
+
+			if (running_processes[i]->cpu_time_remaining == 0)
+			{
+				continue;
+			}
+			else if (running_processes[i]->cpu_first_time > 0 && running_processes[i]->cpu_time_remaining > 0)
+			{
+				j_status = "Run";
+			}
 
 			// print out format 
 			time2 = *localtime(&running_processes[i]->arrival_time);
 			
-			printf("%s\t%d\t%d\t%02d:%02d:%02d\t%s\t\n", 
-			running_processes[i]->program, 
+			printf("%s\t%d\t\t%d\t%02d:%02d:%02d\t%s\t\n", 
+			running_processes[i]->job_name, 
 			running_processes[i]->cpu_time, 
 			running_processes[i]->priority, 
 			time2.tm_hour,
 			time2.tm_min,
 			time2.tm_sec,
-			stat);
+			j_status);
 		}
 	}
 	else
@@ -197,7 +193,7 @@ int run_fcfs(int nargs, char **args)
 {
 	// switch policy and print
 	policy = fcfs;
-	printf("Scheduling policy is switched to FCFS. All the %d waiting jobs have been rescheduled.\n", buff_next - buff_prev);
+	printf("Scheduling policy is switched to FCFS. All the %d waiting jobs have been rescheduled.\n", (buff_next - buff_prev)-1);
 
 	// sort if there are processes
 	if (p_waiting)
@@ -214,7 +210,7 @@ int run_sjf(int nargs, char **args)
 {
 	// switch policy and print
 	policy = sjf;
-	printf("Scheduling policy is switched to SJF. All the %d waiting jobs have been rescheduled.\n", buff_next - buff_prev);
+	printf("Scheduling policy is switched to SJF. All the %d waiting jobs have been rescheduled.\n", (buff_next - buff_prev)-1);
 
 	// sort if there are processes
 	if (p_waiting)
@@ -231,7 +227,7 @@ int run_pri(int nargs, char **args)
 {
 	// switch policy and print
 	policy = priority;
-	printf("Scheduling policy is switched to PRIORITY. All the %d waiting jobs have been rescheduled.\n", buff_next - buff_prev);
+	printf("Scheduling policy is switched to PRIORITY. All the %d waiting jobs have been rescheduled.\n", (buff_next - buff_prev)-1);
 
 	// sort if there are processes
 	if (p_waiting)
