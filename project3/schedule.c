@@ -327,6 +327,25 @@ void performance_metrics()
 void run_benchmark(char *bench_name, int cjobs, int arrival, int pri, int min_cpu, int max_cpu)
 {
 
+if (!arrival)
+{
+    b_job = 1;
+}
+else
+{
+    b_job = 0;
+}
+
+int i;
+
+for (i = 0; i < cjobs; i++)
+{
+
+    if (i >= QUEUE_MAX_LEN)
+    {
+        pthread_cond_signal(&cmd_buf_not_empty);
+    }
+
     // lock process list
     pthread_mutex_lock(&cmd_queue_lock);
 
@@ -351,8 +370,8 @@ void run_benchmark(char *bench_name, int cjobs, int arrival, int pri, int min_cp
     sprintf(new_name, "job%d", id);
     
     // init new process
-    p->cpu_time = atoi(argv[2]);
-    p->cpu_time_remaining = atoi(argv[2]);
+    p->cpu_time = (rand() % (max_cpu + 1)) + 1;
+    p->cpu_time_remaining = (rand() % (max_cpu + 1)) + 1;
     p->cpu_first_time = 0;
     p->priority = (rand() % (pri + 1)) + 1;
     p->response_time = 0;
@@ -363,13 +382,11 @@ void run_benchmark(char *bench_name, int cjobs, int arrival, int pri, int min_cp
     strcpy(p->job_name, new_name);
     strcpy(p->program, "./dispatch");
 
-    new_process new_p = init_process(argv);
-
     // print info about jobs
     char *n_policy = get_policy();
 
     // add process to current list
-    running_processes[buff_next] = new_p;
+    running_processes[buff_next] = p;
 
     // lock to edit process list
     pthread_mutex_lock(&cmd_queue_lock);
@@ -385,8 +402,22 @@ void run_benchmark(char *bench_name, int cjobs, int arrival, int pri, int min_cp
     //sort_process_list(running_processes);
 
     // unlock shared process list
-    pthread_cond_signal(&cmd_buf_not_empty);
+    //pthread_cond_signal(&cmd_buf_not_empty);
     pthread_mutex_unlock(&cmd_queue_lock);
+
+    // wait for all jobs to process
+        if (arrival)
+        {
+            // sleep
+            pthread_cond_signal(&cmd_buf_not_empty);
+            sleep(arrival);
+        }
+    }
+    if (!arrival)
+    {
+        pthread_cond_signal(&cmd_buf_not_empty);
+    }
+
 }
     /*
     // set arrival rate
