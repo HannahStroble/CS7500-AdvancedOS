@@ -72,9 +72,11 @@ int cmd_run(int nargs, char **args) {
 
 int run_bench(int nargs, char **argv)
 {
+	printf("run bench: srand0");
 	srand(0);
+	printf("args %d\n", nargs);
 	// check to make sure correct function usage
-	if (nargs != 8)
+	if (nargs != 7)
 	{
 		// print error
 		printf("Usage: test <benchmark> <policy> <num_of_jobs> <arrival_rate> <priority_levels> <min_CPU_time> <max_cpu_time>\n");
@@ -85,54 +87,48 @@ int run_bench(int nargs, char **argv)
 		printf("Processes are running on CPU, no jobs should be running if doing a benchmark.\n");
 		return EINVAL;
 	}
+	printf("run bench: after init checks");
 
 	// collect variables for benchmark
 	char *bench = argv[1];
 	char *pol = argv[2];
 	int n_j = atoi(argv[3]);
-	int a_rate = atoi(argv[4]);
-	int p_lvl = atoi(argv[5]);
-	int minc = atoi(argv[6]);
-	int maxc = atoi(argv[7]);
+	int a_rate = 0;
+	int p_lvl = atoi(argv[4]);
+	int minc = atoi(argv[5]);
+	int maxc = atoi(argv[6]);
+
+	printf("printing vars: bench %s pol %s job %d plvl %d minc %d maxc %d\n", bench, pol, n_j, p_lvl, minc, maxc );
+
+	printf("run bench: after vars");
 
 	// make sure min is not bigger than max
-	if (minc >= maxc)
+	if (minc > maxc)
 	{
 		printf("Min CPU time cannot be bigger than Max CPU time.\n");
 		return EINVAL;
 	}
 	// make sure all variables are not negative
-	else if (n_j <= 0 || minc < 0 || maxc < 0 || p_lvl < 0 || a_rate < 0)
+	else if (n_j < 0 || minc < 0 || maxc < 0 || p_lvl < 0 || a_rate < 0)
 	{
 		printf("Initial benchmark variables cannot be less than zero.\n");
 		return EINVAL;
 	}
-
+	printf("POLICY %s\n", pol);
 	// set policy
-	if (pol == "fcfs")
-	{
-		policy = fcfs;
-	}
-	else if (pol == "sjf")
-	{
-		policy = sjf;
-	}
-	else if (pol == "priority")
-	{
-		policy = priority;
-	}
-	else
-	{
-		printf("Policy must be fcfs, sjf, or priority.\n");
-		return EINVAL;
-	}
+	set_policy(pol);
+
+	printf("run bench: after policy");
 
 	// run benchmark
 	run_benchmark(bench, n_j, a_rate, p_lvl, minc, maxc);
+	printf("run bench: ran bench");
 	while(p_waiting){};
 
+	printf("run bench: after while crocadile\n");
 	// print metrics
 	performance_metrics();
+	printf("run bench: after metrics");
 
 	// clear out list for later processes
 	int k;
@@ -140,6 +136,7 @@ int run_bench(int nargs, char **argv)
 	{
 		free(finished_processes[k]);
 	}
+	printf("run bench: after freeup\n");
 	finished_next = 0;
 	buff_next = 0;
 	buff_prev = 0;
