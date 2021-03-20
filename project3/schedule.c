@@ -103,12 +103,25 @@ void execute_process(new_process p)
     // create finished process
     memcpy(&finished_processes[finished_next], &running_processes[buff_prev], sizeof(current_process));
 
-    // update finished process list
+    // update finished process
+    finished_processes[finished_next]->finish_time = time(NULL);
+    finished_processes[finished_next]->turnaround_time = finished_processes[finished_next]->finish_time - finished_processes[finished_next]->arrival_time;
+    if (finished_processes[finished_next]->turnaround_time)
+    {
+        finished_processes[finished_next]->waiting_time = finished_processes[finished_next]->turnaround_time - finished_processes[finished_next]->cpu_time;
+    }
+    else
+    {
+        finished_processes[finished_next]->waiting_time = 0;
+    }
+    finished_processes[finished_next]->response_time = finished_processes[finished_next]->cpu_first_time - finished_processes[finished_next]->arrival_time;
+
+    // update finished process head
     finished_next++;
+
+    // update running process to finished cpu time
     running_processes[buff_prev]->cpu_time_remaining = 0;
 
-    // free up memory
-    //free(p);  
 }
 
 ///////////////////////////////////////////////
@@ -134,7 +147,11 @@ void scheduler(int argc, char **argv)
     new_process new_p = init_process(argv);
 
     // print info about jobs
-    // HERE
+    char *n_policy = get_policy();
+    printf("Job %s was submitted.\n", new_p->job_name);
+    printf("Total number of jobs in the queue: %d\n", p_waiting+1);
+    printf("Expected waiting time: %d seconds\n", get_wait_time());
+    printf("Scheduling Policy: %s.\n", n_policy);
 
     // add process to current list
     running_processes[buff_next] = new_p;
@@ -188,6 +205,11 @@ new_process init_process(char **argv)
     return p;
 }
 
+//////////////////////////////////////////////////////////////////////
+////////// POLICY
+//////////////////////////////////////////////////////////////////////
+
+
 // sort processes by scheduling policy
 void sort_process_list(new_process *proc_list)
 {
@@ -237,6 +259,71 @@ int switch_to_policy(const void *a, const void *b)
     return 0;
 }
 
+////////////////////////////////////////////////////////
+////// METRICS
+////////////////////////////////////////////////////////
+
+// calculate estimated wait time
+int get_wait_time()
+{
+    // variables
+    int wait = 0;
+    int i;
+
+    // loop through current processes
+    for (i = buff_prev; i < buff_next; i++)
+    {
+        wait += running_processes[i]->cpu_time_remaining;
+    }
+
+    // return wait time
+    return wait;
+}
+
+// report statistics 
+void performance_metrics()
+{
+    // check if there are any finished processes
+    if (!finished_next)
+    {
+        printf("No jobs were finished. Cannot calculate performance metrics.\n");
+        return;
+    }
+
+    // performance variables
+    int total_wait_time = 0;
+    int total_turn_time = 0;
+    int total_response_time = 0;
+    int total_cpu_time = 0;
+
+    // create process
+    new_process f_process;
+    int index;
+
+    // iterate and update stats on all finished processes
+    for (index = 0; index < finished_next; index++)
+    {
+        // look at first process
+        f_process = finished_processes[index];
+
+        // update totals
+        total_wait_time += f_process->waiting_time;
+        total_turn_time += f_process->turnaround_time;
+        total_response_time += f_process->response_time;
+        total_cpu_time += f_process->cpu_time;
+    }
+
+    // print average metrics
+    printf("Total number of jobs submitted: %d\n", finished_next + (buff_next - buff_prev));
+    printf("Average turnaround time: %.3f seconds\n", total_turn_time / (float)index);
+    printf("Average CPU time: %.3f seconds\n", total_cpu_time / (float)index);
+    printf("Average waiting time: %.3f seconds\n", total_wait_time / (float)index);
+    printf("Average response time: %.3f seconds\n", total_response_time / (float)index);
+    printf("Throughput: %.3f No./second\n", 1/(total_turn_time / (float)index));
+
+}
+
+
 
 ////////////////////////////////////////////////////////
 //// EXTRA 
@@ -270,19 +357,6 @@ char *get_policy()
     return "NULL";
 }
 
-/*
-void print_jobs(new_process *p)
-{
-    int i;
-    char name[200];
-
-    // print out processes
-    for (i=0; i < buff_next; i++)
-    {
-        strcpy(p->job_name, name);
-        printf("Position: %d  Job: %s ", i, name);
-    }
-}*/
 
 
 

@@ -77,11 +77,10 @@ void sort_process_list(new_process *proc_list);
 int switch_to_policy(const void *a, const void *b);
 
 // reporting stats functions
+int get_wait_time();
+void performance_metrics();
 
 // extra programs
 void err_msg(char *item, bool err_flag);
 char *get_policy();
-//void print_jobs(new_process *p);
 
-
-// F

@@ -53,7 +53,6 @@ int cmd_run(int nargs, char **args) {
 	if (file1 == NULL)
 	{
 		printf("File does not exist. Please enter valid file path and name.\n");
-		fclose(file1);
 		return EINVAL;
 	}
 
@@ -74,8 +73,10 @@ int cmd_run(int nargs, char **args) {
  * The quit command.
  */
 int cmd_quit(int nargs, char **args) {
-	printf("Please display performance information before exiting AUbatch!\n");
-  	exit(0);
+	
+	// print metrics and exit
+	performance_metrics(); 
+	exit(0);
 }
 
 // list processes
