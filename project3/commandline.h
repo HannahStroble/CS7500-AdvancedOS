@@ -8,6 +8,7 @@ void *commandline( void *ptr );
 // processing
 int cmd_run(int nargs, char **args);
 int process_list(int nargs, char **args);
+int run_bench(int nargs, char **argv);
 
 // menu
 void menu_execute(char *line, int isargs); 

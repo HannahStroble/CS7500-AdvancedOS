@@ -66,6 +66,90 @@ int cmd_run(int nargs, char **args) {
 
 	return 0; /* if succeed */
 }
+
+//////////////////////////////////////////////
+//// METRICS
+
+int run_bench(int nargs, char **argv)
+{
+	srand(0);
+	// check to make sure correct function usage
+	if (nargs != 8)
+	{
+		// print error
+		printf("Usage: test <benchmark> <policy> <num_of_jobs> <arrival_rate> <priority_levels> <min_CPU_time> <max_cpu_time>\n");
+		return EINVAL;
+	}
+	else if (p_waiting || finished_next)
+	{
+		printf("Processes are running on CPU, no jobs should be running if doing a benchmark.\n");
+		return EINVAL;
+	}
+
+	// collect variables for benchmark
+	char *bench = argv[1];
+	char *pol = argv[2];
+	int n_j = atoi(argv[3]);
+	int a_rate = atoi(argv[4]);
+	int p_lvl = atoi(argv[5]);
+	int minc = atoi(argv[6]);
+	int maxc = atoi(argv[7]);
+
+	// make sure min is not bigger than max
+	if (minc >= maxc)
+	{
+		printf("Min CPU time cannot be bigger than Max CPU time.\n");
+		return EINVAL;
+	}
+	// make sure all variables are not negative
+	else if (n_j <= 0 || minc < 0 || maxc < 0 || p_lvl < 0 || a_rate < 0)
+	{
+		printf("Initial benchmark variables cannot be less than zero.\n");
+		return EINVAL;
+	}
+
+	// set policy
+	if (pol == "fcfs")
+	{
+		policy = fcfs;
+	}
+	else if (pol == "sjf")
+	{
+		policy = sjf;
+	}
+	else if (pol == "priority")
+	{
+		policy = priority;
+	}
+	else
+	{
+		printf("Policy must be fcfs, sjf, or priority.\n");
+		return EINVAL;
+	}
+
+	// run benchmark
+	run_benchmark(bench, n_j, a_rate, p_lvl, minc, maxc);
+	while(p_waiting){};
+
+	// print metrics
+	performance_metrics();
+
+	// clear out list for later processes
+	int k;
+	for (k=0; k < finished_next; k++)
+	{
+		free(finished_processes[k]);
+	}
+	finished_next = 0;
+	buff_next = 0;
+	buff_prev = 0;
+
+	// return 
+	return 0;
+
+}
+
+
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 //////////REPORTING
@@ -181,6 +265,7 @@ static struct {
 	{ "fcfs\n",	run_fcfs },
 	{ "sjf\n",	run_sjf },
 	{ "priority\n",	run_pri },
+	{ "test",	run_bench },
 	{ "q\n",	cmd_quit },
 	{ "quit\n",	cmd_quit },
     {NULL, NULL}
@@ -258,7 +343,7 @@ int cmd_dispatch(char *cmd)
 	     word != NULL;
 	     word = strtok_r(NULL, " ", &context)) {
 
-		if (nargs >= MAXMENUARGS) {
+		if (nargs > MAXMENUARGS+2) {
 			printf("Command line has too many words\n");
 			return E2BIG;
 		}

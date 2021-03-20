@@ -79,6 +79,7 @@ int switch_to_policy(const void *a, const void *b);
 // reporting stats functions
 int get_wait_time();
 void performance_metrics();
+void run_benchmark(char *bench_name, int cjobs, int arrival, int pri, int min_cpu, int max_cpu);
 
 // extra programs
 void err_msg(char *item, bool err_flag);

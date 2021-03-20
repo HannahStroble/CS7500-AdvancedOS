@@ -323,7 +323,72 @@ void performance_metrics()
 
 }
 
+// benchmark
+void run_benchmark(char *bench_name, int cjobs, int arrival, int pri, int min_cpu, int max_cpu)
+{
+    // set arrival rate
+    if (!arrival)
+    {
+        b_job = 1;
+    }
+    else
+    {
+        b_job = 0;
+    }
 
+    // create jobs
+    int j;
+    for (j=0; j < cjobs; j++)
+    {
+        // wait if number of jobs is too big
+        if (j >= QUEUE_MAX_LEN)
+        {
+            pthread_cond_signal(&cmd_buf_not_empty);
+        }
+
+        // unlock 
+        pthread_mutex_unlock(&cmd_queue_lock);
+
+        // create process
+        new_process p = malloc(sizeof(n_process));
+
+        // initialize process
+        int priority = (rand() % pri);
+        int cpu = (rand() % max_cpu);
+        strcpy(p->program, "./dispatch");
+        p->arrival_time = time(NULL);
+        p->cpu_time = cpu;
+        p->cpu_time_remaining = cpu;
+        p->priority = priority;
+        p->cpu_first_time = 0;
+
+        // add to process list
+        running_processes[buff_next] = p;
+
+        // inc pointers and sort
+        p_waiting++;
+        buff_next++;
+        sort_process_list(current_process);
+        buff_next %= QUEUE_MAX_LEN;
+
+        // unlock
+        pthread_mutex_unlock(&cmd_queue_lock);
+
+        // wait for all jobs to process
+        if (arrival)
+        {
+            // sleep
+            pthread_cond_signal(&cmd_buf_not_empty);
+            sleep(arrival);
+        }
+    }
+
+    // if arrival rate is 0 then no jobs are running so run all jobs
+    if (!arrival)
+    {
+        pthread_cond_signal(&cmd_buf_not_empty);
+    }
+}
 
 ////////////////////////////////////////////////////////
 //// EXTRA 
