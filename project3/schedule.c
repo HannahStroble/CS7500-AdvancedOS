@@ -478,7 +478,7 @@ void performance_metrics(int job_num, int is_test)
         // update totals
         total_wait_time += f_process->cpu_time + f_process->waiting_time;
         total_turn_time += f_process->turnaround_time;
-        total_response_time += f_process->response_time + (f_process->cpu_first_time - f_process->arrival_time);
+        total_response_time += f_process->response_time;
         total_cpu_time += f_process->cpu_time;
     }
 
