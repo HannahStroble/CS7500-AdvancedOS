@@ -1,4 +1,11 @@
-// header file
+/////////////////////////////////////////////////////////////////////
+// COMP7500 - Project 3 - A Pthread-based Batch Scheduling System
+// Name: Hannah Reinbolt
+// Date: 3/14/2021
+// Description: Contains scheduling and dispatching modules global variables
+// Note: Referenced code provided by Dr. Qin
+////////////////////////////////////////////////////////////////////
+
 
 // libraries
 #include <stdio.h>
@@ -10,6 +17,7 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <stdbool.h>
+
 
 // global defines
 #define PROGRAM_LEN_MAX 500 // max program length
@@ -75,6 +83,8 @@ void sort_process_list(new_process *proc_list);
 // policy functions
 void sort_process_list(new_process *proc_list);
 int switch_to_policy(const void *a, const void *b);
+char *get_policy();
+int set_policy(char *item);
 
 // reporting stats functions
 int get_wait_time();
@@ -83,6 +93,4 @@ void run_benchmark(char *bench_name, int cjobs, int arrival, int pri, int min_cp
 
 // extra programs
 void err_msg(char *item, bool err_flag);
-char *get_policy();
-int set_policy(char *item);
 

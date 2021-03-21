@@ -6,6 +6,7 @@
 // Note: Referenced code provided by Dr. Qin
 ////////////////////////////////////////////////////////////////////
 
+
 // libraries
 #include <stdio.h>
 #include <unistd.h>
@@ -19,13 +20,26 @@
 // local libraries
 #include "schedule.h"
 
-///////////////////////////////////////////////////////////////
-// DISPATCHER
-///////////////////////////////////////////////////////////////
 
-// Executes jobs on the running_processes queue and adds to finished_processes when finished.
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+///////////    DISPATCHER FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////
+// name: dispatch
+// use: prepares process to be executed
+// description: looks for jobs to be executed and prepares them for execution
+//
+// input: void *point
+// input description: void pointer
+// output: void
+// output description: nothing
+////////////////////////////////////////////////
 void *dispatch(void *point)
 {
+    // always check for new processes
     while(1)
     {
         // lock shared queue so scheduler can't access
@@ -57,7 +71,17 @@ void *dispatch(void *point)
     }
 }
 
-// execute process
+
+////////////////////////////////////////////////
+// name: execute_process
+// use: executes process
+// description: executes jobs on the running_processes queue and adds to finished_processes when finished
+//
+// input: new_process p
+// input description: a single process struct
+// output: void
+// output description: nothing
+////////////////////////////////////////////////
 void execute_process(new_process p)
 {
     // prepare path and program arguments
@@ -85,9 +109,12 @@ void execute_process(new_process p)
     {
         printf("Failed to create a new process.\n");
     }
+    // execute child fork
     else if (child_process == 0)
     {
         execv(path, args);
+
+        // this will only run if execv has failed
         printf("EXECV FAILED! EXITING...");
         exit(0);
     }
@@ -101,7 +128,7 @@ void execute_process(new_process p)
     // wait for child process to complete before updating finished list
     while ((wpid = wait(&child_status)) > 0);
 
-    // create finished process
+    // send to finished process list from running process list
     memcpy(&finished_processes[finished_next], &running_processes[buff_prev], sizeof(current_process));
 
     // update finished process
@@ -122,14 +149,27 @@ void execute_process(new_process p)
 
     // update running process to finished cpu time
     running_processes[buff_prev]->cpu_time_remaining = 0;
-
 }
 
-///////////////////////////////////////////////
-// SCHEDULER
-//////////////////////////////////////////////
 
-// process one job and notify the dispatcher that there is a new job
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+///////////    SCHEDULER FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////
+// name: scheduler
+// use: schedules process for execution
+// description: schedules process for execution by adding it to waiting list and notifies dispatcher
+//
+// input: int argc
+// input description: number of argv
+// input: char **argv
+// input description: char array of user input
+// output: void
+// output description: nothing
+////////////////////////////////////////////////
 void scheduler(int argc, char **argv)
 {
     // lock process list
@@ -164,11 +204,9 @@ void scheduler(int argc, char **argv)
     p_waiting++;
     buff_next++;
 
+    // sort process list
     sort_process_list(running_processes);
     buff_next %= QUEUE_MAX_LEN;
-
-    // sort process list
-    //sort_process_list(running_processes);
 
     // unlock shared process list
     pthread_cond_signal(&cmd_buf_not_empty);
@@ -176,7 +214,16 @@ void scheduler(int argc, char **argv)
 }
 
 
-// initialize new process for scheduler
+////////////////////////////////////////////////
+// name: init_process
+// use: initialize new process for scheduler
+// description: enter default information for new process
+//
+// input: char **argv
+// input description: char array of user input
+// output: new_process
+// output description: a new process struct
+////////////////////////////////////////////////
 new_process init_process(char **argv)
 {
     // init size of new process
@@ -206,18 +253,29 @@ new_process init_process(char **argv)
     return p;
 }
 
-//////////////////////////////////////////////////////////////////////
-////////// POLICY
-//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+///////////    POLICY and SORT FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
 
 
-// sort processes by scheduling policy
+////////////////////////////////////////////////
+// name: sort_process_list
+// use: sort processes by scheduling policy
+// description: sorts current process list by selected scheduling policy
+//
+// input: new_process *proc_list
+// input description: current process
+// output: void
+// output description: nothing
+////////////////////////////////////////////////
 void sort_process_list(new_process *proc_list)
 {
     // sort by index
     int i;
     void *sort_algo = switch_to_policy;
 
+    // update batch job for current running process
     if (!b_job)
     {
         i = buff_prev + 1;
@@ -229,15 +287,28 @@ void sort_process_list(new_process *proc_list)
 
     // quick sort
     qsort(&proc_list[i], buff_next-i, sizeof(new_process), sort_algo);
-    //print_jobs(running_processes);
 }
 
-// sorting
+
+////////////////////////////////////////////////
+// name: switch_to_policy
+// use: determine which lambda sort combo to use with qsort
+// description: determine which lambda sort combo to use with qsort by policy
+//
+// input: const void *a
+// input description: first process
+// input: const void *b
+// input description: second process
+// output: int
+// output description: index where the processes should be placed in queue
+////////////////////////////////////////////////
 int switch_to_policy(const void *a, const void *b)
 {
+    // define new processes
     new_process p_a = *(new_process *)a;
     new_process p_b = *(new_process *)b;
 
+    // lambda function to determine how to sort both processes
     if (policy == fcfs)
     {
         return (p_a->arrival_time - p_b->arrival_time);
@@ -260,11 +331,95 @@ int switch_to_policy(const void *a, const void *b)
     return 0;
 }
 
-////////////////////////////////////////////////////////
-////// METRICS
-////////////////////////////////////////////////////////
 
-// calculate estimated wait time
+////////////////////////////////////////////////
+// name: get_policy
+// use: get string version of current policy
+// description: get the current string version of current policy
+//
+// input: nothing
+// input description: nothing
+// output: char
+// output description: policy in string form
+////////////////////////////////////////////////
+char *get_policy()
+{
+    // convert policy to string
+    if (policy == fcfs)
+    {
+        return "FCFS";
+    }
+    else if (policy == sjf)
+    {
+        return "SJF";
+    }
+    else if (policy == priority)
+    {
+        return "PRIORITY";
+    }
+
+    // if none of these then return
+    return "NULL";
+}
+
+
+////////////////////////////////////////////////
+// name: set_policy
+// use: set policy
+// description: set policy from string input
+//
+// input: char *item
+// input description: string form of current policy
+// output: int
+// output description: determines if successful or failed
+////////////////////////////////////////////////
+int set_policy(char *item)
+{
+    // set policy from string
+	if (!strcmp(item, "fcfs"))
+	{
+		policy = fcfs;
+		return 0;
+	}
+	else if (!strcmp(item, "sjf"))
+	{
+		policy = sjf;
+		return 0;
+	}
+	else if (!strcmp(item, "priority"))
+	{
+		policy = priority;
+		return 0;
+	}
+
+    // if none of these then send error message
+	else
+	{
+		printf("Policy must be fcfs, sjf, or priority.\n");
+		return 1;
+	}
+
+    // return failure
+    return 1;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+///////////    METRIC FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////
+// name: get_wait_time
+// use: calculate wait time
+// description: calculate estimated wait time in waiting processes queue
+//
+// input: nothing
+// input description: nothing
+// output: int
+// output description: waiting time
+////////////////////////////////////////////////
 int get_wait_time()
 {
     // variables
@@ -274,6 +429,7 @@ int get_wait_time()
     // loop through current processes
     for (i = buff_prev; i > buff_next; i++)
     {
+        // add up cpu time remaining
         wait += running_processes[i]->cpu_time_remaining;
     }
 
@@ -281,7 +437,19 @@ int get_wait_time()
     return wait;
 }
 
-// report statistics 
+
+////////////////////////////////////////////////
+// name: performance_metrics
+// use: calculate performance metrics
+// description: calculate performance metrics for finished processes
+//
+// input: int job_num
+// input description: number of jobs
+// input: int is_test
+// input description: flag for if a test was run
+// output: void
+// output description: nothing
+////////////////////////////////////////////////
 void performance_metrics(int job_num, int is_test)
 {
     // check if there are any finished processes
@@ -331,89 +499,109 @@ void performance_metrics(int job_num, int is_test)
 
 }
 
-// benchmark
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+///////////    BENCHMARK FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////
+// name: run_benchmark
+// use: test algorithms with automatic job workloads
+// description: test algorithms with automatic job workload conditions
+//
+// input: char *bench_name
+// input description: user defined name of benchmark
+// input: int cjobs
+// input description: user defined number of automatic jobs
+// input: int arrival
+// input description: user defined arrival time
+// input: int pri
+// input description: user defined priority level
+// input: int min_cpu
+// input description: user defined minimum cpu time
+// input: int max_cpu
+// input description: user defined maximum cpu time
+// output: void
+// output description: nothing
+////////////////////////////////////////////////
 void run_benchmark(char *bench_name, int cjobs, int arrival, int pri, int min_cpu, int max_cpu)
 {
-
-if (!arrival)
-{
-    b_job = 1;
-}
-else
-{
-    b_job = 0;
-}
-
-int i;
-
-for (i = 0; i < cjobs; i++)
-{
-
-    // set random factor seed
-	srand(1);
-
-    if (i >= QUEUE_MAX_LEN)
+    // check if process is currently running
+    if (!arrival)
     {
-        pthread_cond_signal(&cmd_buf_not_empty);
+        b_job = 1;
+    }
+    else
+    {
+        b_job = 0;
     }
 
-    // lock process list
-    pthread_mutex_lock(&cmd_queue_lock);
-
-    // wait until list is not full and still locked
-    while(p_waiting == QUEUE_MAX_LEN)
+    // iterate through all jobs
+    int i;
+    for (i = 0; i < cjobs; i++)
     {
-        pthread_cond_wait(&cmd_buf_not_full, &cmd_queue_lock);
-    }
 
-    // unlock 
-    pthread_mutex_unlock(&cmd_queue_lock);
+        // set random factor seed
+	    srand(1);
 
-    // initialize new process
-    // init size of new process
-    new_process p = malloc(sizeof(n_process));
+        // if at max jobs then wait
+        if (i >= QUEUE_MAX_LEN)
+        {
+            pthread_cond_signal(&cmd_buf_not_empty);
+        }
 
-    // create job name
-    char new_name[200];
-    int id = buff_next;
+        // lock process list
+        pthread_mutex_lock(&cmd_queue_lock);
 
-    // convert to string
-    sprintf(new_name, "job%d", id);
+        // wait until list is not full and still locked
+        while(p_waiting == QUEUE_MAX_LEN)
+        {
+            pthread_cond_wait(&cmd_buf_not_full, &cmd_queue_lock);
+        }
+
+        // unlock 
+        pthread_mutex_unlock(&cmd_queue_lock);
+
+        // initialize new process
+        new_process p = malloc(sizeof(n_process));
+
+        // create job name
+        char new_name[200];
+        int id = buff_next;
+
+        // convert to string
+        sprintf(new_name, "job%d", id);
     
-    // init new process
-    p->cpu_time = (rand() % (max_cpu + 1)) + 1;
-    p->cpu_time_remaining = (rand() % (max_cpu + 1)) + 1;
-    p->cpu_first_time = 0;
-    p->priority = (rand() % (pri + 1)) + 1;
-    p->response_time = 0;
-    p->waiting_time = 0;
-    p->turnaround_time = 0;
-    p->finish_time = 0;
-    p->arrival_time = time(NULL);
-    strcpy(p->job_name, new_name);
-    strcpy(p->program, "./micro");
+        // init new process
+        p->cpu_time = (rand() % (max_cpu + 1)) + 1;
+        p->cpu_time_remaining = (rand() % (max_cpu + 1)) + 1;
+        p->cpu_first_time = 0;
+        p->priority = (rand() % (pri + 1)) + 1;
+        p->response_time = 0;
+        p->waiting_time = 0;
+        p->turnaround_time = 0;
+        p->finish_time = 0;
+        p->arrival_time = time(NULL);
+        strcpy(p->job_name, new_name);
+        strcpy(p->program, "./micro");
 
-    // print info about jobs
-    //char *n_policy = get_policy();
+        // add process to current list
+        running_processes[buff_next] = p;
 
-    // add process to current list
-    running_processes[buff_next] = p;
+        // lock to edit process list
+        pthread_mutex_lock(&cmd_queue_lock);
 
-    // lock to edit process list
-    pthread_mutex_lock(&cmd_queue_lock);
+        // inc counters
+        p_waiting++;
+        buff_next++;
 
-    // inc counters
-    p_waiting++;
-    buff_next++;
-
-    sort_process_list(running_processes);
-    buff_next %= QUEUE_MAX_LEN;
-
-    // sort process list
-    //sort_process_list(running_processes);
+        // sort process list
+        sort_process_list(running_processes);
+        buff_next %= QUEUE_MAX_LEN;
 
     // unlock shared process list
-    //pthread_cond_signal(&cmd_buf_not_empty);
     pthread_mutex_unlock(&cmd_queue_lock);
 
     // wait for all jobs to process
@@ -424,19 +612,33 @@ for (i = 0; i < cjobs; i++)
             sleep(arrival);
         }
     }
+
+    // signal if there are more processes to be run
     if (!arrival)
     {
         pthread_cond_signal(&cmd_buf_not_empty);
     }
-
 }
 
 
-////////////////////////////////////////////////////////
-//// EXTRA 
-///////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+///////////    EXTRA FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
 
-// error printer
+
+////////////////////////////////////////////////
+// name: err_msg
+// use: dynamic error message printer
+// description: call this to dynamically switch on and off print statements for debugging
+//
+// input: char *item
+// input description: string error message
+// input: bool err_flag
+// input description: determines whether to print or not print
+// output: void
+// output description: nothing
+////////////////////////////////////////////////
 void err_msg(char *item, bool err_flag)
 {
     // if flag true then print message
@@ -446,55 +648,3 @@ void err_msg(char *item, bool err_flag)
         printf("\n");
     }
 }
-
-char *get_policy()
-{
-    if (policy == fcfs)
-    {
-        return "FCFS";
-    }
-    else if (policy == sjf)
-    {
-        return "SJF";
-    }
-    else if (policy == priority)
-    {
-        return "PRIORITY";
-    }
-    return "NULL";
-}
-
-int set_policy(char *item)
-{
-    // set policy
-	if (!strcmp(item, "fcfs"))
-	{
-		policy = fcfs;
-		return 0;
-	}
-	else if (!strcmp(item, "sjf"))
-	{
-		policy = sjf;
-		return 0;
-	}
-	else if (!strcmp(item, "priority"))
-	{
-		policy = priority;
-		return 0;
-	}
-	else
-	{
-		printf("Policy must be fcfs, sjf, or priority.\n");
-		return 1;
-	}
-
-    return 1;
-}
-
-
-
-
-
-
-
-
