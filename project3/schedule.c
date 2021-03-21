@@ -3,6 +3,7 @@
 // Name: Hannah Reinbolt
 // Date: 3/14/2021
 // Description: Contains scheduling and dispatching modules.
+// Note: Referenced code provided by Dr. Qin
 ////////////////////////////////////////////////////////////////////
 
 // libraries
@@ -271,7 +272,7 @@ int get_wait_time()
     int i;
 
     // loop through current processes
-    for (i = buff_prev; i == buff_next-1; i = (i + 1) % QUEUE_MAX_LEN)
+    for (i = buff_prev; i > buff_next; i++)
     {
         wait += running_processes[i]->cpu_time_remaining;
     }
@@ -281,7 +282,7 @@ int get_wait_time()
 }
 
 // report statistics 
-void performance_metrics()
+void performance_metrics(int job_num, int is_test)
 {
     // check if there are any finished processes
     if (!finished_next)
@@ -307,14 +308,21 @@ void performance_metrics()
         f_process = finished_processes[index];
 
         // update totals
-        total_wait_time += f_process->waiting_time;
+        total_wait_time += f_process->cpu_time + f_process->waiting_time;
         total_turn_time += f_process->turnaround_time;
-        total_response_time += f_process->response_time;
+        total_response_time += f_process->response_time + (f_process->cpu_first_time - f_process->arrival_time);
         total_cpu_time += f_process->cpu_time;
     }
 
+    // if this is for test, then set correct job number
+    int finished_jobs = finished_next + (buff_next - buff_prev);
+    if (is_test == 1)
+    {
+        finished_jobs = job_num;
+    }
+
     // print average metrics
-    printf("Total number of jobs submitted: %d\n", finished_next + (buff_next - buff_prev));
+    printf("Total number of jobs submitted: %d\n", finished_jobs);
     printf("Average turnaround time: %.3f seconds\n", total_turn_time / (float)index);
     printf("Average CPU time: %.3f seconds\n", total_cpu_time / (float)index);
     printf("Average waiting time: %.3f seconds\n", total_wait_time / (float)index);
@@ -459,17 +467,17 @@ char *get_policy()
 int set_policy(char *item)
 {
     // set policy
-	if (!strcmp(policy_name, "fcfs"))
+	if (!strcmp(item, "fcfs"))
 	{
 		policy = fcfs;
 		return 0;
 	}
-	else if (!strcmp(policy_name, "sjf"))
+	else if (!strcmp(item, "sjf"))
 	{
 		policy = sjf;
 		return 0;
 	}
-	else if (!strcmp(policy_name, "priority"))
+	else if (!strcmp(item, "priority"))
 	{
 		policy = priority;
 		return 0;

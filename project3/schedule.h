@@ -13,7 +13,7 @@
 
 // global defines
 #define PROGRAM_LEN_MAX 500 // max program length
-#define QUEUE_MAX_LEN 12    // max waiting queue length
+#define QUEUE_MAX_LEN 100    // max waiting queue length
 
 // global process list pointers
 int buff_next;          // next free spot in running_processes
@@ -78,7 +78,7 @@ int switch_to_policy(const void *a, const void *b);
 
 // reporting stats functions
 int get_wait_time();
-void performance_metrics();
+void performance_metrics(int job_num, int is_test);
 void run_benchmark(char *bench_name, int cjobs, int arrival, int pri, int min_cpu, int max_cpu);
 
 // extra programs

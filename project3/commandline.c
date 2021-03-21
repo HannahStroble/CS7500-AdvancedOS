@@ -43,7 +43,7 @@
 int cmd_quit(int nargs, char **args) {
 	
 	// print metrics and exit
-	performance_metrics(); 
+	performance_metrics(0,0); 
 	exit(0);
 }
 
@@ -132,7 +132,7 @@ static const char *helpmenu[] = {
 	"fcfs: change the scheduling policy to FCFS.\n",
 	"sjf: change the scheduling policy to SJF.\n",
 	"priority: change the scheduling policy to priority.\n",
-	"test <benchmark> <policy> <num_of_jobs> <priority_levels>\n     <min_CPU_time> <max_CPU_time>\n",
+	"test <benchmark> <policy> <num_of_jobs> <arrival_rate>\n     <priority_levels> <min_CPU_time> <max_CPU_time>\n",
 	"quit: exit AUbatch\n",
 	NULL
 };
@@ -310,7 +310,7 @@ int run_bench(int nargs, char **argv)
 		return EINVAL;
 	}
 	// make sure no other jobs are running
-	else if (p_waiting || finished_next)
+	else if (p_waiting)
 	{
 		printf("Processes are running on CPU, no jobs should be running if doing a benchmark.\n");
 		return EINVAL;
@@ -349,20 +349,7 @@ int run_bench(int nargs, char **argv)
 	while(p_waiting) { }
 
 	// print metrics
-	performance_metrics();
-
-	// free memory from finished queue
-	int k;
-	for (k = 0; k < finished_next; k++)
-	{
-		// free memory
-		free(finished_processes[k]);
-	}
-	
-	// reset counters
-	finished_next = 0;
-	buff_next = 0;
-	buff_prev = 0;
+	performance_metrics(num_jobs, 1);
 
 	// exit 
 	return 0;

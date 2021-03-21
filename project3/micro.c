@@ -13,10 +13,23 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <math.h>
 
 void main(int argc, char *argv[])
 {
   // use cpu for i amount of time
   //printf("your number is: %s", argv[1]);
-  sleep(2);
+  int i;
+  while (i < atoi(argv[1]))
+  {
+    int j;
+    for (j=0; j<214000000; j++)
+    {
+      volatile double x = 9999999.0;
+      volatile double y = cbrt(x);
+      j++;
+    }
+    i++;
+  }
+  sleep(atoi(argv[1]));
 }
