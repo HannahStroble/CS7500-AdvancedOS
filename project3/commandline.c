@@ -425,6 +425,8 @@ static struct {
 	{ "test",	run_bench },
 	{ "q\n",	cmd_quit },
 	{ "quit\n",	cmd_quit },
+	{ "quit -i\n",	cmd_quit },	
+	{ "quit -d\n",	cmd_quit },
     {NULL, NULL}
 };
 
