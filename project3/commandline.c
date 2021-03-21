@@ -42,6 +42,30 @@
 ////////////////////////////////////////////////
 int cmd_quit(int nargs, char **args) {
 	
+	// check if not correct arguments
+	if ((!strcmp(args[1],"-i") || !strcmp(args[1],"-d") || nargs > 2) && nargs != 1)
+	{
+		printf("Incorrect arguments or number of arguments. Try again.\n");
+		return EINVAL;
+	}
+	// wait on processes to finish
+	else if (strcmp(args[1],"-d"))
+	{
+		// only wait if waiting queue is not empty
+		if (p_waiting != 0)
+		{
+			printf("Waiting for processes to finish...\n");
+			while (p_waiting > 0){ }
+		}
+	}
+	// exit immediately, do not wait on processes
+	else if (strcmp(args[1],"-i"))
+	{
+		// print metrics and exit
+		performance_metrics(0,0); 
+		exit(0);
+	}
+	
 	// print metrics and exit
 	performance_metrics(0,0); 
 	exit(0);
@@ -424,9 +448,8 @@ static struct {
 	{ "priority\n",	run_pri },
 	{ "test",	run_bench },
 	{ "q\n",	cmd_quit },
+	{ "quit",	cmd_quit },
 	{ "quit\n",	cmd_quit },
-	{ "quit -i\n",	cmd_quit },	
-	{ "quit -d\n",	cmd_quit },
     {NULL, NULL}
 };
 
