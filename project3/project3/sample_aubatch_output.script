@@ -1,0 +1,40 @@
+Script started on Sun 21 Mar 2021 11:14:42 AM PDT
+]0;root@ubuntu: /home/toor/Desktop/CS7500-AdvancedOS/project3root@ubuntu:/home/toor/Desktop/CS7500-AdvancedOS/project3# ./aubatch
+Welcome to Hannah's batch job scheduler Version 1.0
+Type 'help' to find more about AUbatch commands.
+
+>run ./micro 4 5
+Job job0 was submitted.
+Total number of jobs in the queue: 1
+Expected waiting time: 0 seconds
+Scheduling Policy: FCFS.
+
+>list
+No processes are running.
+
+>run ./micro 10 3
+Job job1 was submitted.
+Total number of jobs in the queue: 1
+Expected waiting time: 0 seconds
+Scheduling Policy: FCFS.
+
+>list
+Total number of jobs in the queue: 1
+Scheduling Policy: FCFS
+Name	CPU_Time	Pri	Arrival_time	Progress
+job1	10		3	11:15:21	Run	
+
+>list
+No processes are running.
+
+>quit
+Total number of jobs submitted: 2
+Average turnaround time: 7.000 seconds
+Average CPU time: 7.000 seconds
+Average waiting time: 7.000 seconds
+Average response time: 0.000 seconds
+Throughput: 0.143 No./second
+]0;root@ubuntu: /home/toor/Desktop/CS7500-AdvancedOS/project3root@ubuntu:/home/toor/Desktop/CS7500-AdvancedOS/project3# exit
+exit
+
+Script done on Sun 21 Mar 2021 11:15:39 AM PDT
