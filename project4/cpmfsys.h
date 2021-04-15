@@ -88,17 +88,17 @@ int  cpmDelete(char * name);
 
 // following functions need not be implemented for Lab 2 
 
-int  cpmCopy(char *oldName, char *newName); 
+//int  cpmCopy(char *oldName, char *newName); 
 
 
-int  cpmOpen( char *fileName, char mode); 
+//int  cpmOpen( char *fileName, char mode); 
 
 // non-zero return indicates filePointer did not point to open file 
-int cpmClose(int filePointer); 
+//int cpmClose(int filePointer); 
 
 // returns number of bytes read, 0 = error 
-int cpmRead(int pointer, uint8_t *buffer, int size);
+//int cpmRead(int pointer, uint8_t *buffer, int size);
 
 // returns number of bytes written, 0 = error 
-int cpmWrite(int pointer, uint8_t *buffer, int size);  
+//int cpmWrite(int pointer, uint8_t *buffer, int size);  
 
