@@ -11,7 +11,6 @@
 //
 ///////////////////////////////////////////////////////////////////
 
-
 // libraries
 #include <stdio.h>
 #include <unistd.h>
@@ -30,6 +29,8 @@
 // public variables
 bool freeblocks[NUM_BLOCKS];
 
+// declare helper function
+int checkName(char *name, char *newname, char *extension);
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -38,12 +39,21 @@ bool freeblocks[NUM_BLOCKS];
 //////////////////////////////////////////////////////////////////////////
 
 
-//function to allocate memory for a DirStructType (see above), and populate it, given a
-//pointer to a buffer of memory holding the contents of disk block 0 (e), and an integer index
-// which tells which extent from block zero (extent numbers start with 0) to use to make the
-// DirStructType value to return. 
-
-// init constructor
+////////////////////////////////////////////////
+// name: mkDirStruct
+// use: initilization constructor for directories
+// description: allocate memory for a DirStructType (see above), and populate it, given a
+//              pointer to a buffer of memory holding the contents of disk block 0 (e), and an integer index
+//              which tells which extent from block zero (extent numbers start with 0) to use to make the
+//              DirStructType value to return. 
+//
+// input: int index
+// input description: index from block 0
+// input: uint8_t *e
+// input description: pointer to block 0
+// output: DirStructType
+// output description: new DirStructType object
+////////////////////////////////////////////////
 DirStructType *mkDirStruct(int index,uint8_t *e)
 {
     // variables 
@@ -99,10 +109,22 @@ DirStructType *mkDirStruct(int index,uint8_t *e)
     return DIR;
 } 
 
-// function to write contents of a DirStructType struct back to the specified index of the extent
-// in block of memory (disk block 0) pointed to by e
 
-// copy constructor
+////////////////////////////////////////////////
+// name: writeDirStruct
+// use: copy constructor for directories
+// description: write contents of a DirStructType struct back to the specified index of the extent
+//              in block of memory (disk block 0) pointed to by e.
+//
+// input: DirStructType *d
+// input description: DirStructType object
+// input: uint8_t index
+// input description: index from block 0
+// input: uint8_t *e
+// input description: pointer to block 0
+// output: N/A
+// output description: N/A
+////////////////////////////////////////////////
 void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e)
 {
     // variables 
@@ -146,9 +168,19 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e)
     makeFreeList();
 } 
 
-// populate the FreeList global data structure. freeList[i] == true means 
-// that block i of the disk is free. block zero is never free, since it holds
-// the directory. freeList[i] == false means the block is in use. 
+
+////////////////////////////////////////////////
+// name: makeFreeList
+// use: free space on global directory list
+// description: populate the FreeList global data structure. freeList[i] == true means 
+//              that block i of the disk is free. block zero is never free, since it holds
+//              the directory. freeList[i] == false means the block is in use.
+//
+// input: N/A
+// input description: N/A
+// output: N/A
+// output description: N/A
+////////////////////////////////////////////////
 void makeFreeList()
 {
     // variables
@@ -189,10 +221,18 @@ void makeFreeList()
 } 
 
 
-
-// debugging function, print out the contents of the free list in 16 rows of 16, with each 
-// row prefixed by the 2-digit hex address of the first block in that row. Denote a used
-// block with a *, a free block with a . 
+////////////////////////////////////////////////
+// name: printFreeList
+// use: print global directory list
+// description: debugging function, print out the contents of the free list in 16 rows of 16, with each 
+//              row prefixed by the 2-digit hex address of the first block in that row. Denote a used
+//              block with a *, a free block with a . 
+//
+// input: N/A
+// input description: N/A
+// output: N/A
+// output description: N/A
+////////////////////////////////////////////////
 void printFreeList()
 {
     // variables
@@ -205,26 +245,33 @@ void printFreeList()
     for (i = 0; i < NUM_BLOCKS; i++)
     {
         // if mod by 16
-        if (i % 16 == 0)
-        { printf("%3x: ", i); }
+        if (i % 16 == 0) { printf("%3x: ", i); }
 
         // not free
-        if (freeblocks[i] == 0)
-        { printf("* "); }
+        if (freeblocks[i] == 0) { printf("* "); }
 
         // free
-        else
-        { printf(". "); }
+        else { printf(". "); }
 
         // add newlines
-        if ((i + 1) % 16 == 0)
-        { printf("\n"); }
+        if ((i + 1) % 16 == 0) { printf("\n"); }
     }
 }
 
 
-// internal function, returns -1 for illegal name or name not found
-// otherwise returns extent nunber 0-31
+////////////////////////////////////////////////
+// name: findExtentWithName
+// use: finds extent number for name
+// description: internal function, returns -1 for illegal name or name not found
+//              otherwise returns extent nunber 0-31
+//
+// input: char *name
+// input description: char array filled with name
+// input: uint8_t *block0
+// input description: uint8_t array filled with block0 contents
+// output: int
+// output description: status code
+////////////////////////////////////////////////
 int findExtentWithName(char *name, uint8_t *block0)
 {
     // variables
@@ -253,8 +300,18 @@ int findExtentWithName(char *name, uint8_t *block0)
     return -1;
 } 
 
-// internal function, returns true for legal name (8.3 format), false for illegal
-// (name or extension too long, name blank, or  illegal characters in name or extension)
+
+////////////////////////////////////////////////
+// name: checkLegalName
+// use: check if name is legal
+// description: internal function, returns true for legal name (8.3 format), false for illegal
+//              (name or extension too long, name blank, or  illegal characters in name or extension)
+//
+// input: char *name
+// input description: char array filled with name
+// output: bool
+// output description: failed or success
+////////////////////////////////////////////////
 bool checkLegalName(char *name)
 {
     // variables
@@ -277,12 +334,21 @@ bool checkLegalName(char *name)
 } 
 
 
-// print the file directory to stdout. Each filename should be printed on its own line, 
-// with the file size, in base 10, following the name and extension, with one space between
-// the extension and the size. If a file does not have an extension it is acceptable to print
-// the dot anyway, e.g. "myfile. 234" would indicate a file whose name was myfile, with no 
-// extension and a size of 234 bytes. This function returns no error codes, since it should
-// never fail unless something is seriously wrong with the disk 
+////////////////////////////////////////////////
+// name: cpmDir
+// use: print file directory
+// description: print the file directory to stdout. Each filename should be printed on its own line, 
+//              with the file size, in base 10, following the name and extension, with one space between
+//              the extension and the size. If a file does not have an extension it is acceptable to print
+//              the dot anyway, e.g. "myfile. 234" would indicate a file whose name was myfile, with no 
+//              extension and a size of 234 bytes. This function returns no error codes, since it should
+//              never fail unless something is seriously wrong with the disk 
+//
+// input: N/A
+// input description: N/A
+// output: N/A
+// output description: N/A
+////////////////////////////////////////////////
 void cpmDir()
 {
     // variables
@@ -329,8 +395,20 @@ void cpmDir()
     }
 }
 
-//read directory block, 
-// modify the extent for file named oldName with newName, and write to the disk
+
+////////////////////////////////////////////////
+// name: cpmRename
+// use: modify existing file name with new file name
+// description: read directory block, 
+//              modify the extent for file named oldName with newName, and write to the disk
+//
+// input: char *oldName
+// input description: existing name, char array
+// input: char *newName
+// input description: new name, char array
+// output: int
+// output description: status code
+////////////////////////////////////////////////
 int cpmRename(char *oldName, char * newName)
 {
     // variables
@@ -369,7 +447,17 @@ int cpmRename(char *oldName, char * newName)
     return 0;
 } 
 
-// delete the file named name, and free its disk blocks in the free list 
+
+////////////////////////////////////////////////
+// name: cpmDelete
+// use: delete file
+// description: delete the file named name, and free its disk blocks in the free list 
+//
+// input: char *name
+// input description: existing name, char array
+// output: int
+// output description: status code
+////////////////////////////////////////////////
 int  cpmDelete(char * name)
 {
     // variables
@@ -397,9 +485,12 @@ int  cpmDelete(char * name)
     // write blank dir to disk
     writeDirStruct(DIR, e_index, block0);
 
+    // free blocks
+    free(DIR);
+    free(block0);
+
     // return false
     return 0;
-
 } 
 
 
@@ -409,7 +500,21 @@ int  cpmDelete(char * name)
 ///////////    HELPER FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-// help check name and extention
+
+////////////////////////////////////////////////
+// name: checkName
+// use: updates name and extension seperately
+// description: splits extension from name and checks if it is valid 
+//
+// input: char *name
+// input description: existing name, char array
+// input: char *newname
+// input description: copy of name, char array
+// input: char *extension
+// input description: extension, char array
+// output: int
+// output description: status code
+////////////////////////////////////////////////
 int checkName(char *name, char *newname, char *extension)
 {
     // variables
