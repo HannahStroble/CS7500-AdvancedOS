@@ -57,8 +57,8 @@ DirStructType *mkDirStruct(int index,uint8_t *e)
     uint8_t *ADDRESS = e + (index * EXTENT_SIZE);
 
     // failed memory allocation
-    if (DIR == NULL)
-    { printf("ERROR: Failed to allocate directory memory.\n"); exit(1); }
+    //if (DIR == NULL)
+    //{ printf("ERROR: Failed to allocate directory memory.\n"); exit(1); }
     
     // set initial status
     DIR->status = ADDRESS[0]; 
@@ -185,13 +185,7 @@ void makeFreeList()
                 { freeblocks[DIR->blocks[k]] = 0; }
             }
         }
-
-        // free dir pointer memory
-        free(DIR);
     }
-
-    // free block0 memory
-    free(block0);
 } 
 
 
@@ -205,7 +199,7 @@ void printFreeList()
     int i = 0;
 
     // header
-    printf("\nFREE BLOCK LIST: (* means in-use)\n");
+    printf("FREE BLOCK LIST: (* means in-use)\n");
 
     // divide into 16x16 
     for (i = 0; i < NUM_BLOCKS; i++)
@@ -276,7 +270,6 @@ bool checkLegalName(char *name)
         // check if a space, control char, punctuation, or number
         if (isspace(name[i]) || iscntrl(name[i]) || ispunct(name[i]))
         { return false; }
-
     }
 
     // return
@@ -305,7 +298,7 @@ void cpmDir()
     blockRead(block0, 0);
 
     // dir list
-    printf("DIRECTORY LISTING");
+    printf("DIRECTORY LISTING\n");
 
     // for all extents
     for (i = 0; i < EXTENT_SIZE; i++)
@@ -333,12 +326,7 @@ void cpmDir()
             // print file stats
             printf("%s.%s %d\n", DIR->name, DIR->extension, file_len);
         }
-        // free pointer
-        free(DIR);
     }
-    // free pointer
-    free(block0);
-
 }
 
 //read directory block, 
@@ -377,9 +365,6 @@ int cpmRename(char *oldName, char * newName)
     // create new dir in correct place with new info
     writeDirStruct(DIR, e_index, block0);
 
-    // free the memory
-    free(DIR); free(block0); free(cpyname); free(cpyextension);
-
     // return 
     return 0;
 } 
@@ -401,7 +386,7 @@ int  cpmDelete(char * name)
 
     // check if file is valid
     if (e_index < 0)
-    { printf("Name does not exist: %s\n", name); return -1; }
+    { return -1; }
 
     // create blank dir at location block0
     DirStructType *DIR = mkDirStruct(e_index, block0);
@@ -411,10 +396,6 @@ int  cpmDelete(char * name)
 
     // write blank dir to disk
     writeDirStruct(DIR, e_index, block0);
-
-    // free pointers
-    free(block0);
-    free(DIR);
 
     // return false
     return 0;
@@ -450,7 +431,7 @@ int checkName(char *name, char *newname, char *extension)
 
         // check if name length is false
         else if (name_len_check == 0)
-        { extension[e_index] = name[i]; e_index; }
+        { extension[e_index] = name[i]; e_index++; }
     }
 
     // reset name index
